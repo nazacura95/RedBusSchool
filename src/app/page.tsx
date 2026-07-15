@@ -2,8 +2,8 @@ import { signIn } from "@/lib/auth";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import Image from "next/image";
 import {
-  Bus,
   Users,
   BookOpen,
   Heart,
@@ -11,6 +11,9 @@ import {
   MessageCircle,
   AtSign,
   Share2,
+  Landmark,
+  Coffee,
+  Bus,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +22,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { LandingNav } from "@/components/landing-nav";
+import { LoginRolePicker } from "@/components/login-role-picker";
 
 async function login(formData: FormData) {
   "use server";
@@ -89,10 +93,12 @@ export default async function Home({
               <StatTile label="Años" value="10+" icon={Heart} tone="info" />
             </div>
           </div>
-          <div className="flex aspect-[4/5] flex-col items-center justify-center rounded-xl bg-neutral-100">
-            <Bus className="h-16 w-16 text-neutral-300" />
-            <p className="mt-2 text-sm text-neutral-400">Foto próximamente</p>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://images.pexels.com/photos/6502822/pexels-photo-6502822.jpeg?auto=compress&cs=tinysrgb&w=1000"
+            alt="Alumno tomando clase de inglés con su profesora"
+            className="aspect-[4/5] w-full rounded-xl object-cover"
+          />
         </div>
       </section>
 
@@ -103,11 +109,25 @@ export default async function Home({
           Un instituto de barrio, con estructura de escuela grande
         </h2>
         <p className="mt-4 max-w-2xl text-neutral-600">
-          Somos Red Bus School: un equipo de 7 profesores —incluidas nosotras, las dueñas, que
-          seguimos dando clases todas las semanas— para unos 150 alumnos de todas las edades.
-          Dejamos atrás los cuadernos de papel: acá todo queda registrado, así que padres y
-          alumnos siempre saben cómo viene el proceso.
+          Somos Redbus School of English: un equipo de 7 profesores —incluidas nosotras, las
+          dueñas, que seguimos dando clases todas las semanas— para unos 150 alumnos de todas las
+          edades. Dejamos atrás los cuadernos de papel: acá todo queda registrado, así que padres
+          y alumnos siempre saben cómo viene el proceso.
         </p>
+        <div className="mt-8 flex flex-wrap items-center gap-6 text-primary-600">
+          <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+            <Landmark className="h-6 w-6 text-primary-600" />
+            Programa con raíces británicas
+          </span>
+          <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+            <Bus className="h-6 w-6 text-primary-600" />
+            El clásico colectivo de dos pisos, nuestro sello
+          </span>
+          <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+            <Coffee className="h-6 w-6 text-primary-600" />
+            Charlas de práctica, estilo &quot;tea time&quot;
+          </span>
+        </div>
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           <Card>
             <Users className="h-6 w-6 text-primary-600" />
@@ -160,7 +180,7 @@ export default async function Home({
       <section id="galeria" className="mx-auto max-w-6xl px-4 py-16">
         <p className="text-sm font-semibold uppercase text-primary-600">Galería</p>
         <h2 className="mt-2 text-2xl font-bold text-neutral-900 md:text-3xl">
-          Así se vive Red Bus School
+          Así se vive Redbus School of English
         </h2>
 
         {images.length > 0 ? (
@@ -170,7 +190,7 @@ export default async function Home({
               <img
                 key={img.id}
                 src={img.url}
-                alt={img.caption ?? "Foto de Red Bus School"}
+                alt={img.caption ?? "Foto de Redbus School of English"}
                 className="h-48 w-full rounded-lg object-cover"
               />
             ))}
@@ -195,7 +215,7 @@ export default async function Home({
             y te ayudamos a elegir el nivel.
           </p>
           <LinkButton
-            href="https://wa.me/5491100000000"
+            href="https://wa.me/5491151385114"
             variant="white"
             size="lg"
             className="mt-8"
@@ -206,8 +226,18 @@ export default async function Home({
             Escribir por WhatsApp
           </LinkButton>
           <p className="mt-6 text-sm text-primary-100">
-            Av. Ejemplo 1234 · Lun a Vie 9 a 20 hs · (011) 4000-0000
+            Av. Croacia 2499-2569, B1666KDM José C. Paz, Buenos Aires · Lun a Vie 9 a 20 hs
           </p>
+          <iframe
+            src={`https://www.google.com/maps?q=${encodeURIComponent(
+              "Redbus School of English, Av. Croacia 2499-2569, B1666KDM José C. Paz, Buenos Aires, Argentina"
+            )}&output=embed`}
+            width="100%"
+            height="300"
+            style={{ border: 0 }}
+            loading="lazy"
+            className="mt-8 rounded-xl"
+          />
         </div>
       </section>
 
@@ -215,15 +245,13 @@ export default async function Home({
       <section id="login" className="bg-white py-16">
         <div className="mx-auto max-w-md px-4">
           <Card className="p-8 shadow-md">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600">
-              <Bus className="h-6 w-6" />
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50">
+              <Image src="/brand/logo-256.png" alt="Redbus School of English" width={32} height={32} className="h-8 w-8" />
             </div>
             <h2 className="mt-4 text-center text-xl font-bold text-neutral-900">
               Ingresá a tu cuenta
             </h2>
-            <p className="mt-1 text-center text-sm text-neutral-500">
-              Alumnos, docentes y directivos usan el mismo acceso.
-            </p>
+            <LoginRolePicker />
 
             {error && (
               <div className="mt-6 rounded-lg bg-danger-50 px-3.5 py-2.5 text-sm text-danger-700">
@@ -265,8 +293,8 @@ export default async function Home({
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div>
               <div className="flex items-center gap-2">
-                <Bus className="h-6 w-6 text-primary-500" />
-                <span className="font-bold text-white">Red Bus School</span>
+                <Image src="/brand/logo-256.png" alt="Redbus School of English" width={28} height={28} className="h-7 w-7" />
+                <span className="font-bold text-white">Redbus School of English</span>
               </div>
               <p className="mt-3 text-sm">Instituto de inglés de barrio, con seguimiento real.</p>
             </div>
@@ -282,8 +310,8 @@ export default async function Home({
             <div>
               <p className="font-semibold text-white">Contacto</p>
               <div className="mt-3 space-y-1 text-sm">
-                <p>Av. Ejemplo 1234</p>
-                <p>(011) 4000-0000</p>
+                <p>Av. Croacia 2499-2569, José C. Paz</p>
+                <p>+54 9 11 5138-5114</p>
                 <p>hola@redbusschool.com</p>
               </div>
               <div className="mt-4 flex gap-4">
@@ -293,7 +321,7 @@ export default async function Home({
             </div>
           </div>
           <div className="mt-6 border-t border-neutral-800 pt-6 text-center text-xs text-neutral-500">
-            © 2026 Red Bus School. Todos los derechos reservados.
+            © 2026 Redbus School of English. Todos los derechos reservados.
           </div>
         </div>
       </footer>

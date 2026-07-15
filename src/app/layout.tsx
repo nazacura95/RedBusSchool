@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Red Bus School",
-  description: "Plataforma de gestión del instituto Red Bus School",
+  title: "Redbus School of English",
+  description: "Plataforma de gestión del instituto Redbus School of English",
 };
 
 export default function RootLayout({

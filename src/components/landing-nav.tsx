@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Bus, Menu, X } from "lucide-react";
+import Image from "next/image";
+import { Menu, X } from "lucide-react";
 import { LinkButton } from "@/components/ui/link-button";
 
 const links = [
@@ -18,10 +19,8 @@ export function LandingNav() {
     <header className="sticky top-0 z-50 h-16 border-b border-neutral-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <a href="#" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-white">
-            <Bus className="h-4 w-4" />
-          </span>
-          <span className="font-semibold text-neutral-900">Red Bus School</span>
+          <Image src="/brand/logo-256.png" alt="Redbus School of English" width={32} height={32} className="h-8 w-8" />
+          <span className="font-semibold text-neutral-900">Redbus School of English</span>
         </a>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-neutral-700 md:flex">
