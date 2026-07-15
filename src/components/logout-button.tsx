@@ -1,14 +1,12 @@
-import { signOut } from "@/lib/auth";
+import { logout } from "@/lib/actions";
 
 export function LogoutButton() {
   return (
-    <form
-      action={async () => {
-        "use server";
-        await signOut({ redirectTo: "/login" });
-      }}
-    >
-      <button type="submit" className="text-sm text-neutral-500 hover:text-neutral-900">
+    <form action={logout}>
+      <button
+        type="submit"
+        className="block w-full px-4 py-2 text-left text-sm text-danger-600 hover:bg-neutral-50"
+      >
         Cerrar sesión
       </button>
     </form>

@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Header } from "@/components/header";
+import { AppShell } from "@/components/app-shell";
+import { Card } from "@/components/ui/card";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 
 export default async function DocenteDashboard() {
   const session = await auth();
@@ -14,24 +16,37 @@ export default async function DocenteDashboard() {
   });
 
   return (
-    <div>
-      <Header title="Panel del docente" name={session!.user.name} />
-      <main className="mx-auto max-w-4xl space-y-8 p-6">
-        <section>
-          <h2 className="mb-2 font-medium">Mis aulas</h2>
-          {!profile || profile.classrooms.length === 0 ? (
-            <p className="text-sm text-neutral-500">Todavía no tenés aulas asignadas.</p>
-          ) : (
-            <ul className="space-y-2">
+    <AppShell role="DOCENTE" name={session!.user.name} title="Panel del docente">
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">Hola, {session!.user.name}</h2>
+        <p className="text-sm text-neutral-500">Este es el resumen de tus aulas.</p>
+      </div>
+
+      <Card>
+        <h3 className="mb-4 font-semibold text-neutral-900">Mis aulas</h3>
+        {!profile || profile.classrooms.length === 0 ? (
+          <p className="text-sm text-neutral-500">Todavía no tenés aulas asignadas.</p>
+        ) : (
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Aula</Th>
+                <Th>Nivel</Th>
+                <Th>Alumnos activos</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
               {profile.classrooms.map((c) => (
-                <li key={c.id} className="rounded border bg-white p-3 text-sm">
-                  <span className="font-medium">{c.name}</span> — {c.level} · {c.enrollments.length} alumnos activos
-                </li>
+                <Tr key={c.id}>
+                  <Td className="font-medium text-neutral-900">{c.name}</Td>
+                  <Td>{c.level}</Td>
+                  <Td>{c.enrollments.length}</Td>
+                </Tr>
               ))}
-            </ul>
-          )}
-        </section>
-      </main>
-    </div>
+            </Tbody>
+          </Table>
+        )}
+      </Card>
+    </AppShell>
   );
 }

@@ -1,6 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Header } from "@/components/header";
+import { AppShell } from "@/components/app-shell";
+import { Card } from "@/components/ui/card";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
+import { PaymentStatusBadge, EnrollmentStatusBadge } from "@/components/ui/badge";
 
 export default async function AlumnoDashboard() {
   const session = await auth();
@@ -16,55 +19,88 @@ export default async function AlumnoDashboard() {
   });
 
   return (
-    <div>
-      <Header title="Panel del alumno" name={session!.user.name} />
-      <main className="mx-auto max-w-4xl space-y-8 p-6">
-        <section>
-          <h2 className="mb-2 font-medium">Mis aulas</h2>
-          {!profile || profile.enrollments.length === 0 ? (
-            <p className="text-sm text-neutral-500">Todavía no estás inscripto en ninguna aula.</p>
-          ) : (
-            <ul className="space-y-2">
+    <AppShell role="ALUMNO" name={session!.user.name} title="Panel del alumno">
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">Hola, {session!.user.name}</h2>
+        <p className="text-sm text-neutral-500">Este es el resumen de tu actividad en el instituto.</p>
+      </div>
+
+      <Card>
+        <h3 className="mb-4 font-semibold text-neutral-900">Mis aulas</h3>
+        {!profile || profile.enrollments.length === 0 ? (
+          <p className="text-sm text-neutral-500">Todavía no estás inscripto en ninguna aula.</p>
+        ) : (
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Aula</Th>
+                <Th>Nivel</Th>
+                <Th>Docente</Th>
+                <Th>Estado</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
               {profile.enrollments.map((e) => (
-                <li key={e.id} className="rounded border bg-white p-3 text-sm">
-                  <span className="font-medium">{e.classroom.name}</span> — {e.classroom.level} · Docente:{" "}
-                  {e.classroom.teacher.user.name} · Estado: {e.status}
-                </li>
+                <Tr key={e.id}>
+                  <Td className="font-medium text-neutral-900">{e.classroom.name}</Td>
+                  <Td>{e.classroom.level}</Td>
+                  <Td>{e.classroom.teacher.user.name}</Td>
+                  <Td>
+                    <EnrollmentStatusBadge status={e.status} />
+                  </Td>
+                </Tr>
               ))}
-            </ul>
-          )}
-        </section>
+            </Tbody>
+          </Table>
+        )}
+      </Card>
 
-        <section>
-          <h2 className="mb-2 font-medium">Últimos pagos</h2>
-          {!profile || profile.payments.length === 0 ? (
-            <p className="text-sm text-neutral-500">Sin pagos registrados.</p>
-          ) : (
-            <ul className="space-y-2">
+      <Card>
+        <h3 className="mb-4 font-semibold text-neutral-900">Últimos pagos</h3>
+        {!profile || profile.payments.length === 0 ? (
+          <p className="text-sm text-neutral-500">Sin pagos registrados.</p>
+        ) : (
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Período</Th>
+                <Th>Monto</Th>
+                <Th>Estado</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
               {profile.payments.map((p) => (
-                <li key={p.id} className="rounded border bg-white p-3 text-sm">
-                  {p.period} — ${p.amount.toString()} — {p.status}
-                </li>
+                <Tr key={p.id}>
+                  <Td className="font-medium text-neutral-900">{p.period}</Td>
+                  <Td>${p.amount.toString()}</Td>
+                  <Td>
+                    <PaymentStatusBadge status={p.status} />
+                  </Td>
+                </Tr>
               ))}
-            </ul>
-          )}
-        </section>
+            </Tbody>
+          </Table>
+        )}
+      </Card>
 
-        <section>
-          <h2 className="mb-2 font-medium">Certificados</h2>
-          {!profile || profile.certificates.length === 0 ? (
-            <p className="text-sm text-neutral-500">Sin certificados emitidos todavía.</p>
-          ) : (
-            <ul className="space-y-2">
-              {profile.certificates.map((c) => (
-                <li key={c.id} className="rounded border bg-white p-3 text-sm">
-                  {c.title} — {c.issuedAt.toLocaleDateString("es-AR")}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </main>
-    </div>
+      <Card>
+        <h3 className="mb-4 font-semibold text-neutral-900">Certificados</h3>
+        {!profile || profile.certificates.length === 0 ? (
+          <p className="text-sm text-neutral-500">Sin certificados emitidos todavía.</p>
+        ) : (
+          <ul className="space-y-2">
+            {profile.certificates.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center justify-between rounded-lg border border-neutral-100 px-4 py-3 text-sm"
+              >
+                <span className="font-medium text-neutral-900">{c.title}</span>
+                <span className="text-neutral-500">{c.issuedAt.toLocaleDateString("es-AR")}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </AppShell>
   );
 }

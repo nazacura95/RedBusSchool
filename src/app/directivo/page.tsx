@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Header } from "@/components/header";
+import { AppShell } from "@/components/app-shell";
+import { StatTile } from "@/components/ui/stat-tile";
+import { Users, Briefcase, BookOpen, AlertTriangle } from "lucide-react";
 
 export default async function DirectivoDashboard() {
   const session = await auth();
@@ -12,26 +14,19 @@ export default async function DirectivoDashboard() {
     prisma.payment.count({ where: { status: "PENDIENTE" } }),
   ]);
 
-  const stats = [
-    { label: "Alumnos", value: totalAlumnos },
-    { label: "Docentes", value: totalDocentes },
-    { label: "Aulas", value: totalAulas },
-    { label: "Cuotas pendientes", value: pagosPendientes },
-  ];
-
   return (
-    <div>
-      <Header title="Panel directivo" name={session!.user.name} />
-      <main className="mx-auto max-w-4xl p-6">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((s) => (
-            <div key={s.label} className="rounded border bg-white p-4">
-              <p className="text-2xl font-semibold">{s.value}</p>
-              <p className="text-sm text-neutral-500">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
+    <AppShell role="DIRECTIVO" name={session!.user.name} title="Panel de Dirección">
+      <div>
+        <h2 className="text-2xl font-bold text-neutral-900">Hola, {session!.user.name}</h2>
+        <p className="text-sm text-neutral-500">Resumen general del instituto.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile label="Alumnos activos" value={totalAlumnos} icon={Users} tone="primary" />
+        <StatTile label="Docentes" value={totalDocentes} icon={Briefcase} tone="accent" />
+        <StatTile label="Aulas en curso" value={totalAulas} icon={BookOpen} tone="info" />
+        <StatTile label="Cuotas pendientes" value={pagosPendientes} icon={AlertTriangle} tone="warning" />
+      </div>
+    </AppShell>
   );
 }
