@@ -14,6 +14,10 @@ import {
   Landmark,
   Coffee,
   Bus,
+  Baby,
+  TrendingUp,
+  Award,
+  LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,12 +44,12 @@ async function login(formData: FormData) {
   }
 }
 
-const niveles = [
-  { badge: "Kids (6-10 años)", text: "Primeras palabras y juegos en inglés" },
-  { badge: "Teens (11-15)", text: "Conversación y gramática para la escuela" },
-  { badge: "Adultos Principiantes", text: "Arrancá de cero, a tu ritmo" },
-  { badge: "Intermedio", text: "Fluidez para el día a día" },
-  { badge: "Avanzado", text: "Conversación y preparación de exámenes" },
+const niveles: { badge: string; text: string; icon: LucideIcon }[] = [
+  { badge: "Kids (6-10 años)", text: "Primeras palabras y juegos en inglés", icon: Baby },
+  { badge: "Teens (11-15)", text: "Conversación y gramática para la escuela", icon: Users },
+  { badge: "Adultos Principiantes", text: "Arrancá de cero, a tu ritmo", icon: BookOpen },
+  { badge: "Intermedio", text: "Fluidez para el día a día", icon: TrendingUp },
+  { badge: "Avanzado", text: "Conversación y preparación de exámenes", icon: Award },
 ];
 
 export default async function Home({
@@ -103,30 +107,40 @@ export default async function Home({
       </section>
 
       {/* Quiénes somos */}
-      <section id="quienes-somos" className="mx-auto max-w-5xl px-4 py-16">
-        <p className="text-sm font-semibold uppercase text-primary-600">Quiénes somos</p>
-        <h2 className="mt-2 text-2xl font-bold text-neutral-900 md:text-3xl">
-          Un instituto de barrio, con estructura de escuela grande
-        </h2>
-        <p className="mt-4 max-w-2xl text-neutral-600">
-          Somos Redbus School of English: un equipo de 7 profesores —incluidas nosotras, las
-          dueñas, que seguimos dando clases todas las semanas— para unos 150 alumnos de todas las
-          edades. Dejamos atrás los cuadernos de papel: acá todo queda registrado, así que padres
-          y alumnos siempre saben cómo viene el proceso.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center gap-6 text-primary-600">
-          <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-            <Landmark className="h-6 w-6 text-primary-600" />
-            Programa con raíces británicas
-          </span>
-          <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-            <Bus className="h-6 w-6 text-primary-600" />
-            El clásico colectivo de dos pisos, nuestro sello
-          </span>
-          <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-            <Coffee className="h-6 w-6 text-primary-600" />
-            Charlas de práctica, estilo &quot;tea time&quot;
-          </span>
+      <section id="quienes-somos" className="mx-auto max-w-6xl px-4 py-16">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
+          <div>
+            <p className="text-sm font-semibold uppercase text-primary-600">Quiénes somos</p>
+            <h2 className="mt-2 text-2xl font-bold text-neutral-900 md:text-3xl">
+              Un instituto de barrio, con estructura de escuela grande
+            </h2>
+            <p className="mt-4 max-w-2xl text-neutral-600">
+              Somos Redbus School of English: un equipo de 7 profesores —incluidas nosotras, las
+              dueñas, que seguimos dando clases todas las semanas— para unos 150 alumnos de todas
+              las edades. Dejamos atrás los cuadernos de papel: acá todo queda registrado, así que
+              padres y alumnos siempre saben cómo viene el proceso.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-6">
+              <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+                <Landmark className="h-6 w-6 text-primary-600" />
+                Programa con raíces británicas
+              </span>
+              <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+                <Bus className="h-6 w-6 text-primary-600" />
+                El clásico colectivo de dos pisos, nuestro sello
+              </span>
+              <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
+                <Coffee className="h-6 w-6 text-primary-600" />
+                Charlas de práctica, estilo &quot;tea time&quot;
+              </span>
+            </div>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://images.pexels.com/photos/5212342/pexels-photo-5212342.jpeg?auto=compress&cs=tinysrgb&w=1000"
+            alt="Profesora dando clase de inglés a un grupo de alumnos"
+            className="aspect-[4/3] w-full rounded-xl object-cover"
+          />
         </div>
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           <Card>
@@ -137,14 +151,14 @@ export default async function Home({
             </p>
           </Card>
           <Card>
-            <BookOpen className="h-6 w-6 text-primary-600" />
+            <BookOpen className="h-6 w-6 text-accent-600" />
             <h3 className="mt-3 font-semibold text-neutral-900">Seguimiento real</h3>
             <p className="mt-1 text-sm text-neutral-600">
               Registro digital de asistencia, tareas y progreso, sin cuadernos perdidos.
             </p>
           </Card>
           <Card>
-            <Heart className="h-6 w-6 text-primary-600" />
+            <Heart className="h-6 w-6 text-info-500" />
             <h3 className="mt-3 font-semibold text-neutral-900">Trato cercano</h3>
             <p className="mt-1 text-sm text-neutral-600">
               Profesoras que conocen a cada alumno por su nombre.
@@ -163,7 +177,12 @@ export default async function Home({
           <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">
             {niveles.map((n) => (
               <Card key={n.badge}>
-                <Badge tone="neutral">{n.badge}</Badge>
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+                  <n.icon className="h-5 w-5" />
+                </span>
+                <div className="mt-3">
+                  <Badge tone="neutral">{n.badge}</Badge>
+                </div>
                 <p className="mt-3 text-sm text-neutral-600">{n.text}</p>
               </Card>
             ))}

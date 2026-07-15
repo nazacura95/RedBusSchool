@@ -55,8 +55,6 @@ model StudentProfile {
   phone        String?
   birthDate    DateTime?
   address      String?
-  guardianName  String? // para alumnos menores de edad
-  guardianPhone String?
   notes        String?  // observaciones del legajo académico
   createdAt    DateTime @default(now())
 
@@ -64,8 +62,23 @@ model StudentProfile {
   payments     Payment[]
   certificates Certificate[]
   submissions  Submission[]
+  contacts     EmergencyContact[]
 
   @@map("student_profiles")
+}
+
+// Contacto de referencia de un alumno (padre, madre, tutor, u otro) — puede haber varios.
+model EmergencyContact {
+  id           String         @id @default(cuid())
+  studentId    String
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  relationship String         // "Padre", "Madre", "Tutor/a", "Otro"
+  name         String
+  phone        String
+  email        String?
+  createdAt    DateTime       @default(now())
+
+  @@map("emergency_contacts")
 }
 
 // Datos propios del docente (las dueñas también tienen este perfil si dan clases).
@@ -73,7 +86,9 @@ model TeacherProfile {
   id         String   @id @default(cuid())
   userId     String   @unique
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dni        String?  @unique
   phone      String?
+  address    String?
   hourlyRate Decimal? @db.Decimal(10, 2) // para liquidación de nómina
   createdAt  DateTime @default(now())
 
@@ -86,7 +101,7 @@ model TeacherProfile {
 // Aula: un grupo de nivel a cargo de un docente.
 model Classroom {
   id        String   @id @default(cuid())
-  name      String
+  name      String   @unique
   level     String   // texto libre por ahora (ej "Nivel 3", "B1") — pasar a tabla de niveles cuando definan la nomenclatura
   teacherId String
   teacher   TeacherProfile @relation(fields: [teacherId], references: [id])

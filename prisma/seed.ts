@@ -28,6 +28,7 @@ const LAST_NAMES = [
 ];
 
 const PAYMENT_METHODS = ["efectivo", "transferencia", "tarjeta"];
+const RELATIONSHIPS = ["Madre", "Padre", "Tutor/a"];
 
 function pick<T>(arr: T[], i: number): T {
   return arr[i % arr.length];
@@ -80,16 +81,22 @@ async function main() {
   const classrooms = [];
   for (let i = 0; i < LEVELS.length; i++) {
     const teacher = pick(teacherProfiles, i);
-    const classroom = await prisma.classroom.create({
-      data: { name: `${LEVELS[i]} - Comisión A`, level: LEVELS[i], teacherId: teacher.id },
+    const name = `${LEVELS[i]} - Comisión A`;
+    const classroom = await prisma.classroom.upsert({
+      where: { name },
+      update: {},
+      create: { name, level: LEVELS[i], teacherId: teacher.id },
     });
     classrooms.push(classroom);
   }
   // segunda comisión para los primeros 3 niveles (más alumnos, institutos reales tienen varias)
   for (let i = 0; i < 3; i++) {
     const teacher = pick(teacherProfiles, i + 3);
-    const classroom = await prisma.classroom.create({
-      data: { name: `${LEVELS[i]} - Comisión B`, level: LEVELS[i], teacherId: teacher.id },
+    const name = `${LEVELS[i]} - Comisión B`;
+    const classroom = await prisma.classroom.upsert({
+      where: { name },
+      update: {},
+      create: { name, level: LEVELS[i], teacherId: teacher.id },
     });
     classrooms.push(classroom);
   }
@@ -103,11 +110,32 @@ async function main() {
     const email = `alumno${i + 1}@redbusschool.com`;
     const name = fullName(i);
     const user = await upsertUser(email, name, "alumno123", ["ALUMNO"]);
+    const birthYear = 2026 - (6 + (i % 30)); // entre 6 y 35 años
+    const studentData = {
+      dni: `${30000000 + i}`,
+      phone: `11${4000000 + i * 37}`,
+      address: `Calle ${100 + i} ${pick(["", "1° A", "PB", "3° C"], i)}`.trim(),
+      birthDate: new Date(birthYear, i % 12, 1 + (i % 28)),
+    };
     const profile = await prisma.studentProfile.upsert({
       where: { userId: user.id },
-      update: {},
-      create: { userId: user.id, dni: `${30000000 + i}` },
+      update: studentData,
+      create: { userId: user.id, ...studentData },
     });
+
+    const existingContacts = await prisma.emergencyContact.count({ where: { studentId: profile.id } });
+    if (existingContacts === 0 && birthYear >= 2010) {
+      // alumnos menores: contacto de madre/padre/tutor
+      await prisma.emergencyContact.create({
+        data: {
+          studentId: profile.id,
+          relationship: pick(RELATIONSHIPS, i),
+          name: fullName(i, 7),
+          phone: `11${5000000 + i * 41}`,
+          email: `contacto${i + 1}@gmail.com`,
+        },
+      });
+    }
 
     const classroom = pick(classrooms, i);
     await prisma.enrollment.upsert({
@@ -116,22 +144,25 @@ async function main() {
       create: { studentId: profile.id, classroomId: classroom.id, status: pick(enrollmentStatuses, i) },
     });
 
-    // últimos 3 meses de cuotas por alumno
-    const now = new Date(2026, 6, 1); // julio 2026
-    for (let m = 0; m < 3; m++) {
-      const period = new Date(now.getFullYear(), now.getMonth() - m, 1);
-      const periodStr = `${period.getFullYear()}-${String(period.getMonth() + 1).padStart(2, "0")}`;
-      const status = m === 0 ? pick(paymentStatuses, i) : "PAGADO";
-      await prisma.payment.create({
-        data: {
-          studentId: profile.id,
-          amount: 15000,
-          period: periodStr,
-          status,
-          paidAt: status === "PAGADO" ? period : null,
-          method: status === "PAGADO" ? pick(PAYMENT_METHODS, i) : null,
-        },
-      });
+    // últimos 3 meses de cuotas por alumno (solo si todavía no tiene pagos cargados)
+    const existingPayments = await prisma.payment.count({ where: { studentId: profile.id } });
+    if (existingPayments === 0) {
+      const now = new Date(2026, 6, 1); // julio 2026
+      for (let m = 0; m < 3; m++) {
+        const period = new Date(now.getFullYear(), now.getMonth() - m, 1);
+        const periodStr = `${period.getFullYear()}-${String(period.getMonth() + 1).padStart(2, "0")}`;
+        const status = m === 0 ? pick(paymentStatuses, i) : "PAGADO";
+        await prisma.payment.create({
+          data: {
+            studentId: profile.id,
+            amount: 15000,
+            period: periodStr,
+            status,
+            paidAt: status === "PAGADO" ? period : null,
+            method: status === "PAGADO" ? pick(PAYMENT_METHODS, i) : null,
+          },
+        });
+      }
     }
   }
 
@@ -141,9 +172,12 @@ async function main() {
     update: {},
     create: { studentId: ownerStudentProfile.id, classroomId: classrooms[4].id, status: "ACTIVA" },
   });
-  await prisma.payment.create({
-    data: { studentId: ownerStudentProfile.id, amount: 15000, period: "2026-07", status: "PENDIENTE" },
-  });
+  const ownerHasPayments = await prisma.payment.count({ where: { studentId: ownerStudentProfile.id } });
+  if (ownerHasPayments === 0) {
+    await prisma.payment.create({
+      data: { studentId: ownerStudentProfile.id, amount: 15000, period: "2026-07", status: "PENDIENTE" },
+    });
+  }
 
   console.log(`Listo. Usuario principal: ${ownerEmail} / ${ownerPassword} (DIRECTIVO + DOCENTE + ALUMNO)`);
   console.log(`${teacherProfiles.length} docentes, ${classrooms.length} aulas, ${STUDENT_COUNT} alumnos de prueba.`);

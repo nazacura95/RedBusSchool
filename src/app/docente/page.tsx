@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AppShell } from "@/components/app-shell";
@@ -38,7 +39,11 @@ export default async function DocenteDashboard() {
             <Tbody>
               {profile.classrooms.map((c) => (
                 <Tr key={c.id}>
-                  <Td className="font-medium text-neutral-900">{c.name}</Td>
+                  <Td className="font-medium text-neutral-900">
+                    <Link href={`/docente/${c.id}`} className="hover:underline">
+                      {c.name}
+                    </Link>
+                  </Td>
                   <Td>{c.level}</Td>
                   <Td>{c.enrollments.length}</Td>
                 </Tr>
