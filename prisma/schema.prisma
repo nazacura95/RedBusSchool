@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ALUMNO
+  DOCENTE
+  DIRECTIVO
+}
+
+enum EnrollmentStatus {
+  ACTIVA
+  PAUSADA
+  FINALIZADA
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  PAGADO
+  VENCIDO
+}
+
+enum SubmissionStatus {
+  ENTREGADO
+  CORREGIDO
+}
+
+// Un usuario del sistema. El rol determina qué perfil (Student/Teacher) aplica.
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  role          Role
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+
+  @@map("users")
+}
+
+// Legajo del alumno: datos personales e historial que no están en User.
+model StudentProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dni          String?  @unique
+  phone        String?
+  birthDate    DateTime?
+  address      String?
+  guardianName  String? // para alumnos menores de edad
+  guardianPhone String?
+  notes        String?  // observaciones del legajo académico
+  createdAt    DateTime @default(now())
+
+  enrollments  Enrollment[]
+  payments     Payment[]
+  certificates Certificate[]
+  submissions  Submission[]
+
+  @@map("student_profiles")
+}
+
+// Datos propios del docente (las dueñas también tienen este perfil si dan clases).
+model TeacherProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone      String?
+  hourlyRate Decimal? @db.Decimal(10, 2) // para liquidación de nómina
+  createdAt  DateTime @default(now())
+
+  classrooms   Classroom[]
+  payrollItems PayrollItem[]
+
+  @@map("teacher_profiles")
+}
+
+// Aula: un grupo de nivel a cargo de un docente.
+model Classroom {
+  id        String   @id @default(cuid())
+  name      String
+  level     String   // texto libre por ahora (ej "Nivel 3", "B1") — pasar a tabla de niveles cuando definan la nomenclatura
+  teacherId String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id])
+  createdAt DateTime @default(now())
+
+  enrollments Enrollment[]
+  materials   Material[]
+  assignments Assignment[]
+  recordings  Recording[]
+
+  @@map("classrooms")
+}
+
+// Inscripción de un alumno a un aula (relación N:M con estado).
+model Enrollment {
+  id          String           @id @default(cuid())
+  studentId   String
+  student     StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroomId String
+  classroom   Classroom        @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  status      EnrollmentStatus @default(ACTIVA)
+  startDate   DateTime         @default(now())
+  endDate     DateTime?
+
+  @@unique([studentId, classroomId])
+  @@map("enrollments")
+}
+
+// Material de estudio subido por el docente, organizado por aula.
+model Material {
+  id          String    @id @default(cuid())
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  title       String
+  fileUrl     String    // URL en Vercel Blob
+  fileType    String    // pdf, doc, audio, etc.
+  createdAt   DateTime  @default(now())
+
+  @@map("materials")
+}
+
+// Clase grabada, organizada por aula.
+model Recording {
+  id          String    @id @default(cuid())
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  title       String
+  videoUrl    String    // URL en Vercel Blob o embed externo
+  createdAt   DateTime  @default(now())
+
+  @@map("recordings")
+}
+
+// Tarea/ejercicio asignado en un aula.
+model Assignment {
+  id          String    @id @default(cuid())
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+
+  submissions Submission[]
+
+  @@map("assignments")
+}
+
+// Entrega de un alumno para una tarea, con corrección del docente.
+model Submission {
+  id           String            @id @default(cuid())
+  assignmentId String
+  assignment   Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  content      String?           // texto de la entrega
+  fileUrl      String?           // adjunto opcional
+  status       SubmissionStatus  @default(ENTREGADO)
+  grade        String?
+  feedback     String?
+  submittedAt  DateTime          @default(now())
+  gradedAt     DateTime?
+
+  @@unique([assignmentId, studentId])
+  @@map("submissions")
+}
+
+// Certificado emitido a un alumno.
+model Certificate {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title       String   // ej "Certificado Nivel 3 completo"
+  issuedAt    DateTime @default(now())
+  fileUrl     String?  // PDF generado/subido
+
+  @@map("certificates")
+}
+
+// Pago de cuota registrado manualmente (MVP). Preparado para sumar Mercado Pago
+// (mpPaymentId/mpStatus) sin migrar el modelo cuando se integre el gateway.
+model Payment {
+  id            String        @id @default(cuid())
+  studentId     String
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount        Decimal       @db.Decimal(10, 2)
+  period        String        // ej "2026-07" (mes que cubre la cuota)
+  status        PaymentStatus @default(PENDIENTE)
+  paidAt        DateTime?
+  method        String?       // efectivo, transferencia, mercadopago...
+  mpPaymentId   String?       // id de pago en Mercado Pago, cuando aplique
+  notes         String?
+  createdAt     DateTime      @default(now())
+
+  @@map("payments")
+}
+
+// Liquidación de horas de un docente por período (nómina básica).
+model PayrollItem {
+  id         String   @id @default(cuid())
+  teacherId  String
+  teacher    TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  period     String   // ej "2026-07"
+  hours      Decimal  @db.Decimal(6, 2)
+  amount     Decimal  @db.Decimal(10, 2)
+  paid       Boolean  @default(false)
+  paidAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@unique([teacherId, period])
+  @@map("payroll_items")
+}
