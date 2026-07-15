@@ -30,6 +30,13 @@ enum SubmissionStatus {
   CORREGIDO
 }
 
+enum LeadStatus {
+  NUEVO
+  CONTACTADO
+  INSCRIPTO
+  DESCARTADO
+}
+
 // Un usuario del sistema. Puede tener más de un rol (ej. una dueña que también da clases).
 model User {
   id            String    @id @default(cuid())
@@ -249,6 +256,21 @@ model PayrollItem {
 
   @@unique([teacherId, period])
   @@map("payroll_items")
+}
+
+// Persona interesada en inscribirse que dejó sus datos en la landing pública.
+model Lead {
+  id        String     @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  interest  String     // en qué nivel/programa está interesado, texto libre
+  message   String?
+  status    LeadStatus @default(NUEVO)
+  notes     String?    // notas internas de admisiones (seguimiento de contacto)
+  createdAt DateTime   @default(now())
+
+  @@map("leads")
 }
 
 // Foto de la galería pública del sitio de marketing (institución/eventos).

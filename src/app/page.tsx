@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { LandingNav } from "@/components/landing-nav";
 import { LoginRolePicker } from "@/components/login-role-picker";
+import { LeadForm } from "./lead-form";
 
 async function login(formData: FormData) {
   "use server";
@@ -230,20 +231,22 @@ export default async function Home({
         <div className="mx-auto max-w-2xl px-4">
           <h2 className="text-2xl font-bold text-white md:text-3xl">¿Querés sumarte?</h2>
           <p className="mt-3 text-primary-50">
-            Escribinos por WhatsApp o pasá por el instituto. Te contamos los horarios disponibles
-            y te ayudamos a elegir el nivel.
+            Dejanos tus datos y te contamos los horarios disponibles y te ayudamos a elegir el
+            nivel.
           </p>
-          <LinkButton
+
+          <LeadForm />
+
+          <a
             href="https://wa.me/5491151385114"
-            variant="white"
-            size="lg"
-            className="mt-8"
             target="_blank"
             rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary-100 hover:text-white"
           >
-            <MessageCircle className="h-5 w-5" />
-            Escribir por WhatsApp
-          </LinkButton>
+            <MessageCircle className="h-4 w-4" />
+            ¿Preferís escribirnos directo? Hablanos por WhatsApp
+          </a>
+
           <p className="mt-6 text-sm text-primary-100">
             Av. Croacia 2499-2569, B1666KDM José C. Paz, Buenos Aires · Lun a Vie 9 a 20 hs
           </p>
