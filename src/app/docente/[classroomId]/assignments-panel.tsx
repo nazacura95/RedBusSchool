@@ -5,8 +5,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { GradeSubmission } from "./grade-submission";
 
-type Submission = { status: "ENTREGADO" | "CORREGIDO" };
+type Submission = {
+  id: string;
+  studentId: string;
+  content: string | null;
+  status: "ENTREGADO" | "CORREGIDO";
+  grade: string | null;
+  feedback: string | null;
+  submittedAt: string;
+  student: { user: { name: string } };
+};
 type Assignment = {
   id: string;
   title: string;
@@ -30,6 +40,9 @@ export function AssignmentsPanel({
   const [dueDate, setDueDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [grading, setGrading] = useState<{ assignmentId: string; assignmentTitle: string; submission: Submission } | null>(
+    null
+  );
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -113,10 +126,49 @@ export function AssignmentsPanel({
                 <Badge tone="warning">{entregado} entregado{entregado === 1 ? "" : "s"}</Badge>
                 <Badge tone="success">{corregido} corregido{corregido === 1 ? "" : "s"}</Badge>
               </div>
+              {a.submissions.length > 0 && (
+                <ul className="mt-3 space-y-1.5 border-t border-neutral-100 pt-3">
+                  {a.submissions.map((s) => (
+                    <li key={s.id} className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-neutral-700">{s.student.user.name}</span>
+                      <div className="flex items-center gap-2">
+                        <Badge tone={s.status === "CORREGIDO" ? "success" : "warning"}>
+                          {s.status === "CORREGIDO" ? "Corregido" : "Entregado"}
+                        </Badge>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setGrading({ assignmentId: a.id, assignmentTitle: a.title, submission: s })}
+                        >
+                          {s.status === "CORREGIDO" ? "Ver corrección" : "Corregir"}
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           );
         })}
       </div>
+
+      <GradeSubmission
+        open={grading !== null}
+        onClose={() => setGrading(null)}
+        submission={grading?.submission ?? null}
+        studentName={grading?.submission.student.user.name ?? ""}
+        assignmentTitle={grading?.assignmentTitle ?? ""}
+        onSaved={(updated) => {
+          setAssignments((prev) =>
+            prev.map((a) =>
+              a.id === grading?.assignmentId
+                ? { ...a, submissions: a.submissions.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)) }
+                : a
+            )
+          );
+        }}
+      />
     </Card>
   );
 }

@@ -126,8 +126,24 @@ model Enrollment {
   startDate   DateTime         @default(now())
   endDate     DateTime?
 
+  attendances Attendance[]
+
   @@unique([studentId, classroomId])
   @@map("enrollments")
+}
+
+// Asistencia de un alumno a una clase puntual de un aula.
+model Attendance {
+  id           String     @id @default(cuid())
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  date         DateTime   @db.Date
+  present      Boolean
+  notes        String?
+  createdAt    DateTime   @default(now())
+
+  @@unique([enrollmentId, date])
+  @@map("attendances")
 }
 
 // Material de estudio subido por el docente, organizado por aula.

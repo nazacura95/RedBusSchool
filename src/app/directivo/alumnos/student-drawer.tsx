@@ -23,10 +23,21 @@ type StudentDetail = {
     status: string;
     startDate: string;
     classroom: { name: string; level: string; teacher: { user: { name: string } } };
+    attendances: { present: boolean }[];
   }[];
   payments: { id: string; period: string; amount: string; status: string; method: string | null }[];
   certificates: { id: string; title: string; issuedAt: string }[];
 };
+
+function attendanceSummary(enrollments: StudentDetail["enrollments"]) {
+  return enrollments
+    .filter((e) => e.attendances.length > 0)
+    .map((e) => {
+      const total = e.attendances.length;
+      const present = e.attendances.filter((a) => a.present).length;
+      return { key: e.id, classroom: e.classroom.name, present, total };
+    });
+}
 
 const RELATIONSHIP_OPTIONS = ["Madre", "Padre", "Tutor/a", "Otro"];
 const selectClass =
@@ -43,6 +54,8 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
       .then((res) => res.json())
       .then((data) => setStudent(data));
   }, [studentId]);
+
+  const attendanceRows = student ? attendanceSummary(student.enrollments) : [];
 
   async function handleAddContact(e: React.FormEvent) {
     e.preventDefault();
@@ -228,6 +241,23 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
                   <li key={c.id} className="flex items-center justify-between text-sm">
                     <span className="text-neutral-900">{c.title}</span>
                     <span className="text-neutral-500">{new Date(c.issuedAt).toLocaleDateString("es-AR")}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DrawerSection>
+
+          <DrawerSection title="Asistencia">
+            {attendanceRows.length === 0 ? (
+              <p className="text-sm text-neutral-500">Sin asistencia registrada todavía.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {attendanceRows.map((r) => (
+                  <li key={r.key} className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-900">{r.classroom}</span>
+                    <span className="text-neutral-500">
+                      {r.present} presentes / {r.total} clases registradas ({Math.round((r.present / r.total) * 100)}%)
+                    </span>
                   </li>
                 ))}
               </ul>

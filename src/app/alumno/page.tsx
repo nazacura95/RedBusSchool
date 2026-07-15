@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { PaymentStatusBadge, EnrollmentStatusBadge } from "@/components/ui/badge";
+import { TareasSection } from "./tareas-section";
 
 export default async function AlumnoDashboard() {
   const session = await auth();
@@ -17,6 +18,17 @@ export default async function AlumnoDashboard() {
       certificates: true,
     },
   });
+
+  const assignments = profile
+    ? await prisma.assignment.findMany({
+        where: { classroomId: { in: profile.enrollments.map((e) => e.classroomId) } },
+        include: {
+          classroom: { select: { name: true } },
+          submissions: { where: { studentId: profile.id } },
+        },
+        orderBy: { dueDate: "asc" },
+      })
+    : [];
 
   return (
     <AppShell roles={session!.user.roles} name={session!.user.name} title="Panel del alumno">
@@ -101,6 +113,13 @@ export default async function AlumnoDashboard() {
           </ul>
         )}
       </Card>
+
+      <TareasSection
+        initialAssignments={assignments.map((a) => ({
+          ...a,
+          dueDate: a.dueDate ? a.dueDate.toISOString() : null,
+        }))}
+      />
     </AppShell>
   );
 }

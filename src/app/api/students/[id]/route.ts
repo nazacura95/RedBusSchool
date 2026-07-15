@@ -15,7 +15,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       user: true,
       contacts: { orderBy: { createdAt: "asc" } },
       enrollments: {
-        include: { classroom: { include: { teacher: { include: { user: true } } } } },
+        include: {
+          classroom: { include: { teacher: { include: { user: true } } } },
+          attendances: { select: { present: true } },
+        },
         orderBy: { startDate: "desc" },
       },
       payments: { orderBy: { period: "desc" } },

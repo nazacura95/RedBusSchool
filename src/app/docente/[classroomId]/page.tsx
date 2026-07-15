@@ -7,6 +7,7 @@ import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { EnrollmentStatusBadge } from "@/components/ui/badge";
 import { MaterialsPanel } from "./materials-panel";
 import { AssignmentsPanel } from "./assignments-panel";
+import { AttendancePanel } from "./attendance-panel";
 
 export default async function DocenteClassroomPage({
   params,
@@ -23,13 +24,22 @@ export default async function DocenteClassroomPage({
       teacher: true,
       enrollments: { include: { student: { include: { user: true } } }, orderBy: { startDate: "asc" } },
       materials: { orderBy: { createdAt: "desc" } },
-      assignments: { include: { submissions: true }, orderBy: { createdAt: "desc" } },
+      assignments: {
+        include: {
+          submissions: {
+            include: { student: { include: { user: true } } },
+            orderBy: { submittedAt: "asc" },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
   if (!classroom || classroom.teacher.userId !== userId) notFound();
 
-  const activeStudents = classroom.enrollments.filter((e) => e.status === "ACTIVA").length;
+  const activeEnrollments = classroom.enrollments.filter((e) => e.status === "ACTIVA");
+  const activeStudents = activeEnrollments.length;
 
   return (
     <AppShell roles={session!.user.roles} name={session!.user.name} title={classroom.name}>
@@ -66,6 +76,11 @@ export default async function DocenteClassroomPage({
         )}
       </Card>
 
+      <AttendancePanel
+        classroomId={classroom.id}
+        students={activeEnrollments.map((e) => ({ enrollmentId: e.id, name: e.student.user.name }))}
+      />
+
       <MaterialsPanel classroomId={classroom.id} initialMaterials={classroom.materials} />
 
       <AssignmentsPanel
@@ -73,6 +88,16 @@ export default async function DocenteClassroomPage({
         initialAssignments={classroom.assignments.map((a) => ({
           ...a,
           dueDate: a.dueDate ? a.dueDate.toISOString() : null,
+          submissions: a.submissions.map((s) => ({
+            id: s.id,
+            studentId: s.studentId,
+            content: s.content,
+            status: s.status,
+            grade: s.grade,
+            feedback: s.feedback,
+            submittedAt: s.submittedAt.toISOString(),
+            student: { user: { name: s.student.user.name } },
+          })),
         }))}
         totalActiveStudents={activeStudents}
       />
