@@ -9,12 +9,12 @@ import { LogoutButton } from "./logout-button";
 type Role = "ALUMNO" | "DOCENTE" | "DIRECTIVO";
 
 export function AppShell({
-  role,
+  roles,
   name,
   title,
   children,
 }: {
-  role: Role;
+  roles: Role[];
   name: string;
   title: string;
   children: React.ReactNode;
@@ -26,7 +26,7 @@ export function AppShell({
     <div className="min-h-screen bg-neutral-50">
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block">
-        <Sidebar role={role} />
+        <Sidebar roles={roles} />
       </div>
 
       {/* Mobile drawer */}
@@ -45,7 +45,7 @@ export function AppShell({
             >
               <X className="h-5 w-5" />
             </button>
-            <Sidebar role={role} onNavigate={() => setDrawerOpen(false)} />
+            <Sidebar roles={roles} onNavigate={() => setDrawerOpen(false)} />
           </div>
         </div>
       )}

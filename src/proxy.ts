@@ -1,33 +1,45 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import type { Role } from "@prisma/client";
 
-const roleHome: Record<string, string> = {
-  ALUMNO: "/alumno",
-  DOCENTE: "/docente",
+const roleHome: Record<Role, string> = {
   DIRECTIVO: "/directivo",
+  DOCENTE: "/docente",
+  ALUMNO: "/alumno",
 };
+
+// orden de preferencia para elegir el home "default" cuando el usuario tiene varios roles
+const roleHomePriority: Role[] = ["DIRECTIVO", "DOCENTE", "ALUMNO"];
+
+function defaultHome(roles: Role[]) {
+  const preferred = roleHomePriority.find((r) => roles.includes(r));
+  return roleHome[preferred ?? roles[0]];
+}
+
+const publicPaths = ["/", "/login"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;
+  // sesiones firmadas antes del cambio a roles múltiples no traen `roles` (array) —
+  // tratarlas como no autenticadas en vez de romper, para forzar un nuevo login.
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
 
-  if (!user) {
-    if (pathname === "/login") return NextResponse.next();
+  if (!user || roles.length === 0) {
+    if (publicPaths.includes(pathname)) return NextResponse.next();
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // ya logueado, mandarlo a su home si entra a / o /login
-  if (pathname === "/" || pathname === "/login") {
-    return NextResponse.redirect(new URL(roleHome[user.role], req.url));
+  // ya logueado: la home pública/login lo mandan a su dashboard
+  if (publicPaths.includes(pathname)) {
+    return NextResponse.redirect(new URL(defaultHome(roles), req.url));
   }
 
-  // bloquear secciones de otro rol
+  // bloquear secciones de un rol que no tiene
   const section = "/" + pathname.split("/")[1];
-  const allowedSection = roleHome[user.role];
-  if (section.startsWith("/alumno") || section.startsWith("/docente") || section.startsWith("/directivo")) {
-    if (section !== allowedSection) {
-      return NextResponse.redirect(new URL(allowedSection, req.url));
-    }
+  const sectionRole = (Object.keys(roleHome) as Role[]).find((r) => roleHome[r] === section);
+  if (sectionRole && !roles.includes(sectionRole)) {
+    return NextResponse.redirect(new URL(defaultHome(roles), req.url));
   }
 
   return NextResponse.next();

@@ -30,13 +30,13 @@ enum SubmissionStatus {
   CORREGIDO
 }
 
-// Un usuario del sistema. El rol determina qué perfil (Student/Teacher) aplica.
+// Un usuario del sistema. Puede tener más de un rol (ej. una dueña que también da clases).
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
   passwordHash  String
   name          String
-  role          Role
+  roles         Role[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -218,4 +218,15 @@ model PayrollItem {
 
   @@unique([teacherId, period])
   @@map("payroll_items")
+}
+
+// Foto de la galería pública del sitio de marketing (institución/eventos).
+model SiteImage {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("site_images")
 }
