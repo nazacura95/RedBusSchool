@@ -39,7 +39,7 @@ export function Sidebar({ roles, onNavigate }: { roles: Role[]; onNavigate?: () 
   return (
     <div className="flex h-full w-[232px] flex-col gap-1 bg-accent-600 p-3.5">
       <div className="flex items-center gap-2 px-2.5 pb-5 pt-1.5">
-        <Image src="/brand/logo-256.png" alt="Redbus School of English" width={26} height={26} className="h-6.5 w-6.5 shrink-0" />
+        <Image src="/brand/logo-256.png" alt="Redbus School of English" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full" />
         <span className="truncate font-serif text-base font-bold text-white">Redbus School</span>
       </div>
       <nav className="flex flex-1 flex-col gap-1">

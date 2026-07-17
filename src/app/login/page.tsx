@@ -35,7 +35,7 @@ export default async function LoginPage({
     <div className="flex min-h-screen flex-col bg-neutral-50">
       <header className="flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/brand/logo-256.png" alt="Redbus School" width={32} height={32} className="h-8 w-8 rounded-full" />
+          <Image src="/brand/logo-256.png" alt="Redbus School" width={44} height={44} className="h-11 w-11 rounded-full" />
           <span className="font-serif text-[19px] font-bold text-neutral-800">
             Redbus <span className="text-primary-500">School</span>
           </span>
@@ -47,8 +47,8 @@ export default async function LoginPage({
 
       <div className="flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-sm rounded-[20px] bg-white p-8 shadow-lg">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50">
-            <Image src="/brand/logo-256.png" alt="Redbus School" width={32} height={32} className="h-8 w-8" />
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary-50">
+            <Image src="/brand/logo-256.png" alt="Redbus School" width={64} height={64} className="h-16 w-16" />
           </div>
           <h2 className="mt-4 text-center text-xl font-semibold text-neutral-800">Ingresá a tu cuenta</h2>
 

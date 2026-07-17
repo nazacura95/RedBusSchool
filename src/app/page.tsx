@@ -301,7 +301,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div>
               <div className="flex items-center gap-2">
-                <Image src="/brand/logo-256.png" alt="Redbus School of English" width={28} height={28} className="h-7 w-7 rounded-full" />
+                <Image src="/brand/logo-256.png" alt="Redbus School of English" width={40} height={40} className="h-10 w-10 rounded-full" />
                 <span className="font-serif font-bold text-white">Redbus School of English</span>
               </div>
               <p className="mt-3 text-sm">Instituto de inglés de barrio, con seguimiento real.</p>

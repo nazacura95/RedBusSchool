@@ -20,7 +20,7 @@ export function LandingNav() {
     <header className="sticky top-0 z-50 border-b border-neutral-200 bg-neutral-50/92 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/brand/logo-256.png" alt="Redbus School" width={32} height={32} className="h-8 w-8 rounded-full" />
+          <Image src="/brand/logo-256.png" alt="Redbus School" width={44} height={44} className="h-11 w-11 rounded-full" />
           <span className="font-serif text-[19px] font-bold text-neutral-800">
             Redbus <span className="text-primary-500">School</span>
           </span>
