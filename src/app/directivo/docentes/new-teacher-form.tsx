@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 
 export function NewTeacherForm({
   onClose,
@@ -15,7 +14,6 @@ export function NewTeacherForm({
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [dni, setDni] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -31,7 +29,7 @@ export function NewTeacherForm({
     const res = await fetch("/api/teachers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, dni, phone, address, hourlyRate }),
+      body: JSON.stringify({ name, email, dni, phone, address, hourlyRate }),
     });
 
     setSaving(false);
@@ -62,24 +60,14 @@ export function NewTeacherForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Contraseña inicial</Label>
-          <PasswordInput
-            id="password"
-            required
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
           <Label htmlFor="dni">DNI</Label>
-          <Input id="dni" value={dni} onChange={(e) => setDni(e.target.value)} />
+          <Input id="dni" required value={dni} onChange={(e) => setDni(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="phone">Teléfono</Label>
           <Input id="phone" required placeholder="11 2233 4455" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <p className="text-xs text-neutral-500">
-            Le llega por WhatsApp la bienvenida y el código para elegir su propia contraseña.
+            Con email, DNI y teléfono va a poder activar su cuenta una vez que la habilites desde su legajo.
           </p>
         </div>
         <div className="space-y-1.5">

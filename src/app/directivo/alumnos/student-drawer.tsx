@@ -16,7 +16,7 @@ type StudentDetail = {
   phone: string | null;
   address: string | null;
   birthDate: string | null;
-  user: { name: string; email: string };
+  user: { name: string; email: string; enabled: boolean };
   contacts: Contact[];
   enrollments: {
     id: string;
@@ -48,6 +48,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactForm, setContactForm] = useState({ name: "", relationship: "Madre", phone: "", email: "" });
   const [saving, setSaving] = useState(false);
+  const [togglingAccess, setTogglingAccess] = useState(false);
 
   useEffect(() => {
     fetch(`/api/students/${studentId}`)
@@ -56,6 +57,21 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
   }, [studentId]);
 
   const attendanceRows = student ? attendanceSummary(student.enrollments) : [];
+
+  async function handleToggleAccess() {
+    if (!student) return;
+    setTogglingAccess(true);
+    const res = await fetch(`/api/students/${studentId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: !student.user.enabled }),
+    });
+    setTogglingAccess(false);
+    if (res.ok) {
+      const { enabled } = await res.json();
+      setStudent((prev) => (prev ? { ...prev, user: { ...prev.user, enabled } } : prev));
+    }
+  }
 
   async function handleAddContact(e: React.FormEvent) {
     e.preventDefault();
@@ -106,6 +122,25 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
             <DrawerField label="Dirección" value={student.address} />
             <DrawerField label="Teléfono" value={student.phone} />
             <DrawerField label="Email" value={student.user.email} />
+            <div className="mt-3 flex items-center justify-between rounded-lg border border-neutral-200 p-3">
+              <div>
+                <p className="text-sm font-medium text-neutral-900">Acceso a la plataforma</p>
+                <p className="text-xs text-neutral-500">
+                  {student.user.enabled
+                    ? "Habilitado: puede activar/recuperar su contraseña en /recuperar."
+                    : "Deshabilitado: no puede entrar ni activar su cuenta."}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={student.user.enabled ? "secondary" : "primary"}
+                onClick={handleToggleAccess}
+                disabled={togglingAccess}
+              >
+                {togglingAccess ? "Guardando..." : student.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
+              </Button>
+            </div>
           </DrawerSection>
 
           <DrawerSection title="Contactos de emergencia">

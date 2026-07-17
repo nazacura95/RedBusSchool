@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { sendWelcomeWhatsApp } from "@/lib/password-reset";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -27,27 +27,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  const { name, email, password, dni, phone, address, hourlyRate } = await req.json();
-  if (!name || !email || !password) {
+  const { name, email, dni, phone, address, hourlyRate } = await req.json();
+  if (!name || !email || !dni || !phone) {
     return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  // nadie conoce esta contraseña: el docente elige la suya en /recuperar una vez habilitado.
+  const passwordHash = await bcrypt.hash(crypto.randomUUID(), 10);
 
   try {
     const teacher = await prisma.teacherProfile.create({
       data: {
-        dni: dni || null,
-        phone: phone || null,
+        dni,
+        phone,
         address: address || null,
         hourlyRate: hourlyRate ? hourlyRate : null,
-        user: { create: { name, email, passwordHash, roles: ["DOCENTE"] } },
+        user: { create: { name, email, passwordHash, roles: ["DOCENTE"], enabled: false } },
       },
       include: { user: true },
     });
-    if (phone) {
-      sendWelcomeWhatsApp(name, email, phone).catch((err) => console.error("No se pudo enviar bienvenida por WhatsApp", err));
-    }
     return NextResponse.json(teacher);
   } catch (err) {
     if ((err as { code?: string }).code === "P2002") {

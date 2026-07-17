@@ -11,45 +11,27 @@ import { PasswordInput } from "@/components/ui/password-input";
 
 export default function RecuperarPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"request" | "confirm">("request");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({ email: "", dni: "", phone: "", password: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleRequest(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-    const res = await fetch("/api/auth/reset/request", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, phone }),
-    });
-    setSaving(false);
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-      setError(data?.error ?? "No se pudo enviar el código.");
-      return;
-    }
-    setStep("confirm");
+  function set<K extends keyof typeof form>(key: K, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleConfirm(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const res = await fetch("/api/auth/reset/confirm", {
+    const res = await fetch("/api/auth/activar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code, password }),
+      body: JSON.stringify(form),
     });
     setSaving(false);
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      setError(data?.error ?? "No se pudo actualizar la contraseña.");
+      setError(data?.error ?? "No se pudo guardar la contraseña.");
       return;
     }
     router.push("/login");
@@ -71,74 +53,49 @@ export default function RecuperarPage() {
 
       <div className="flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-sm rounded-[20px] bg-white p-8 shadow-lg">
-          <h2 className="text-center text-xl font-semibold text-neutral-800">
-            {step === "request" ? "Recuperar acceso" : "Elegí tu contraseña"}
-          </h2>
+          <h2 className="text-center text-xl font-semibold text-neutral-800">Activar cuenta / recuperar acceso</h2>
           <p className="mt-1 text-center text-sm text-neutral-500">
-            {step === "request"
-              ? "Ingresá el email y teléfono con los que te dieron de alta. Te mandamos un código por WhatsApp."
-              : `Te enviamos un código por WhatsApp al número registrado.`}
+            Ingresá los datos con los que te dieron de alta en el instituto y elegí tu contraseña.
           </p>
 
           {error && (
             <div className="mt-4 rounded-lg bg-danger-50 px-3.5 py-2.5 text-sm text-danger-700">{error}</div>
           )}
 
-          {step === "request" ? (
-            <form onSubmit={handleRequest} className="mt-6 space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="phone">Teléfono</Label>
-                <Input
-                  id="phone"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="11 2233 4455"
-                />
-              </div>
-              <Button type="submit" variant="primary" size="lg" className="w-full" disabled={saving}>
-                {saving ? "Enviando..." : "Enviar código por WhatsApp"}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleConfirm} className="mt-6 space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="code">Código de 6 dígitos</Label>
-                <Input
-                  id="code"
-                  required
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Nueva contraseña</Label>
-                <PasswordInput
-                  id="password"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <Button type="submit" variant="primary" size="lg" className="w-full" disabled={saving}>
-                {saving ? "Guardando..." : "Guardar contraseña"}
-              </Button>
-            </form>
-          )}
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" required value={form.email} onChange={(e) => set("email", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="dni">DNI</Label>
+              <Input id="dni" required value={form.dni} onChange={(e) => set("dni", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Teléfono</Label>
+              <Input
+                id="phone"
+                required
+                value={form.phone}
+                onChange={(e) => set("phone", e.target.value)}
+                placeholder="11 2233 4455"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Nueva contraseña</Label>
+              <PasswordInput
+                id="password"
+                required
+                minLength={6}
+                autoComplete="new-password"
+                value={form.password}
+                onChange={(e) => set("password", e.target.value)}
+              />
+            </div>
+            <Button type="submit" variant="primary" size="lg" className="w-full" disabled={saving}>
+              {saving ? "Guardando..." : "Guardar contraseña"}
+            </Button>
+          </form>
         </div>
       </div>
     </div>

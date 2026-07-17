@@ -3,68 +3,29 @@ import { prisma } from "@/lib/prisma";
 import { sendWhatsAppText } from "@/lib/openwa";
 import { normalizePhone } from "@/lib/phone";
 
-const CODE_TTL_MS = 10 * 60 * 1000;
-const MAX_ATTEMPTS = 5;
+const MISMATCH_ERROR = "No encontramos una cuenta habilitada con ese email, DNI y teléfono.";
 
-function generateCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-async function getProfilePhone(userId: string): Promise<string | null> {
+async function getProfile(userId: string): Promise<{ dni: string | null; phone: string | null } | null> {
   const [student, teacher] = await Promise.all([
-    prisma.studentProfile.findUnique({ where: { userId }, select: { phone: true } }),
-    prisma.teacherProfile.findUnique({ where: { userId }, select: { phone: true } }),
+    prisma.studentProfile.findUnique({ where: { userId }, select: { dni: true, phone: true } }),
+    prisma.teacherProfile.findUnique({ where: { userId }, select: { dni: true, phone: true } }),
   ]);
-  return student?.phone ?? teacher?.phone ?? null;
+  return student ?? teacher ?? null;
 }
 
-export async function requestPasswordResetCode(email: string, phone: string) {
+// activación de cuenta nueva y recuperación de contraseña son el mismo flujo: si los 3 datos
+// coinciden con el legajo y el directivo habilitó la cuenta, se puede elegir contraseña.
+export async function activateOrResetPassword(email: string, dni: string, phone: string, newPassword: string) {
   const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
-  const storedPhone = user ? await getProfilePhone(user.id) : null;
+  if (!user || !user.enabled) return { ok: false as const, error: MISMATCH_ERROR };
 
-  if (!user || !storedPhone || normalizePhone(storedPhone) !== normalizePhone(phone)) {
-    return { ok: false as const, error: "No encontramos una cuenta con ese email y teléfono." };
-  }
-
-  const code = generateCode();
-  const codeHash = await bcrypt.hash(code, 10);
-
-  await prisma.passwordResetCode.deleteMany({ where: { userId: user.id, usedAt: null } });
-  await prisma.passwordResetCode.create({
-    data: { userId: user.id, codeHash, expiresAt: new Date(Date.now() + CODE_TTL_MS) },
-  });
-
-  await sendWhatsAppText(
-    normalizePhone(storedPhone),
-    `Redbus School: tu código para elegir contraseña es ${code}. Vence en 10 minutos. Si no lo pediste, ignorá este mensaje.`,
-  );
-
-  return { ok: true as const };
-}
-
-export async function confirmPasswordReset(email: string, code: string, newPassword: string) {
-  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
-  if (!user) return { ok: false as const, error: "Código inválido o vencido." };
-
-  const record = await prisma.passwordResetCode.findFirst({
-    where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!record || record.attempts >= MAX_ATTEMPTS) {
-    return { ok: false as const, error: "Código inválido o vencido." };
-  }
-
-  const valid = await bcrypt.compare(code, record.codeHash);
-  if (!valid) {
-    await prisma.passwordResetCode.update({ where: { id: record.id }, data: { attempts: { increment: 1 } } });
-    return { ok: false as const, error: "Código incorrecto." };
-  }
+  const profile = await getProfile(user.id);
+  const dniMatch = profile?.dni && profile.dni.trim() === dni.trim();
+  const phoneMatch = profile?.phone && normalizePhone(profile.phone) === normalizePhone(phone);
+  if (!dniMatch || !phoneMatch) return { ok: false as const, error: MISMATCH_ERROR };
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: user.id }, data: { passwordHash } }),
-    prisma.passwordResetCode.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
-  ]);
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
 
   return { ok: true as const };
 }
@@ -73,6 +34,6 @@ export async function sendWelcomeWhatsApp(name: string, email: string, phone: st
   const loginUrl = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/recuperar` : "https://red-bus-school.vercel.app/recuperar";
   await sendWhatsAppText(
     normalizePhone(phone),
-    `¡Hola ${name}! Ya sos parte de Redbus School of English. Para activar tu cuenta y elegir tu contraseña, entrá a ${loginUrl} con tu email (${email}) y tu teléfono.`,
+    `¡Hola ${name}! Ya podés entrar a Redbus School of English. Andá a ${loginUrl} y con tu email (${email}), DNI y teléfono vas a poder elegir tu contraseña.`,
   );
 }

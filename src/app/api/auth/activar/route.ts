@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { confirmPasswordReset } from "@/lib/password-reset";
+import { activateOrResetPassword } from "@/lib/password-reset";
 
 export async function POST(req: Request) {
-  const { email, code, password } = await req.json();
-  if (!email || !code || !password || password.length < 6) {
+  const { email, dni, phone, password } = await req.json();
+  if (!email || !dni || !phone || !password || password.length < 6) {
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   }
 
-  const result = await confirmPasswordReset(email, code, password);
+  const result = await activateOrResetPassword(email, dni, phone, password);
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }

@@ -3,20 +3,18 @@
 import { useState } from "react";
 import { Drawer } from "@/components/ui/drawer";
 import { Input, Label } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 
 type FormState = {
   name: string;
   email: string;
-  password: string;
   dni: string;
   phone: string;
   address: string;
   birthDate: string;
 };
 
-const EMPTY_FORM: FormState = { name: "", email: "", password: "", dni: "", phone: "", address: "", birthDate: "" };
+const EMPTY_FORM: FormState = { name: "", email: "", dni: "", phone: "", address: "", birthDate: "" };
 
 export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -64,19 +62,8 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Contraseña inicial</Label>
-          <PasswordInput
-            id="password"
-            autoComplete="new-password"
-            value={form.password}
-            onChange={(e) => set("password", e.target.value)}
-            required
-            minLength={6}
-          />
-        </div>
-        <div className="space-y-1.5">
           <Label htmlFor="dni">DNI</Label>
-          <Input id="dni" value={form.dni} onChange={(e) => set("dni", e.target.value)} />
+          <Input id="dni" value={form.dni} onChange={(e) => set("dni", e.target.value)} required />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="phone">Teléfono</Label>
@@ -88,7 +75,7 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
             placeholder="11 2233 4455"
           />
           <p className="text-xs text-neutral-500">
-            Le llega por WhatsApp la bienvenida y el código para elegir su propia contraseña.
+            Con email, DNI y teléfono va a poder activar su cuenta una vez que la habilites desde su legajo.
           </p>
         </div>
         <div className="space-y-1.5">
