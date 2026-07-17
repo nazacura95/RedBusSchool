@@ -49,8 +49,23 @@ model User {
 
   studentProfile StudentProfile?
   teacherProfile TeacherProfile?
+  resetCodes     PasswordResetCode[]
 
   @@map("users")
+}
+
+// código de 6 dígitos enviado por WhatsApp para activar cuenta o recuperar contraseña
+model PasswordResetCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  attempts  Int       @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("password_reset_codes")
 }
 
 // Legajo del alumno: datos personales e historial que no están en User.

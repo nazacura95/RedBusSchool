@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { Input, Label } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { RolePicker } from "./role-picker";
 
 async function login(formData: FormData) {
@@ -68,11 +69,11 @@ export default async function LoginPage({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Contraseña</Label>
-                <span className="cursor-not-allowed text-xs font-medium text-primary-500">
+                <Link href="/recuperar" className="text-xs font-medium text-primary-500 hover:underline">
                   ¿Olvidaste tu contraseña?
-                </span>
+                </Link>
               </div>
-              <Input id="password" name="password" type="password" required autoComplete="current-password" />
+              <PasswordInput id="password" name="password" required autoComplete="current-password" />
             </div>
             <Button type="submit" variant="primary" size="lg" className="w-full">
               Ingresar

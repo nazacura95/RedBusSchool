@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Drawer } from "@/components/ui/drawer";
 import { Input, Label } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 
 type FormState = {
@@ -64,9 +65,8 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Contraseña inicial</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="new-password"
             value={form.password}
             onChange={(e) => set("password", e.target.value)}
@@ -80,7 +80,16 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="phone">Teléfono</Label>
-          <Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+          <Input
+            id="phone"
+            value={form.phone}
+            onChange={(e) => set("phone", e.target.value)}
+            required
+            placeholder="11 2233 4455"
+          />
+          <p className="text-xs text-neutral-500">
+            Le llega por WhatsApp la bienvenida y el código para elegir su propia contraseña.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="address">Dirección</Label>

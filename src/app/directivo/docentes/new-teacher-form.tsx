@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function NewTeacherForm({
   onClose,
@@ -62,9 +63,8 @@ export function NewTeacherForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Contraseña inicial</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             required
             autoComplete="new-password"
             value={password}
@@ -77,7 +77,10 @@ export function NewTeacherForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="phone">Teléfono</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Input id="phone" required placeholder="11 2233 4455" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <p className="text-xs text-neutral-500">
+            Le llega por WhatsApp la bienvenida y el código para elegir su propia contraseña.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="address">Dirección</Label>

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendWelcomeWhatsApp } from "@/lib/password-reset";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -44,6 +45,9 @@ export async function POST(req: Request) {
       },
       include: { user: true },
     });
+    if (phone) {
+      sendWelcomeWhatsApp(name, email, phone).catch((err) => console.error("No se pudo enviar bienvenida por WhatsApp", err));
+    }
     return NextResponse.json(teacher);
   } catch (err) {
     if ((err as { code?: string }).code === "P2002") {
