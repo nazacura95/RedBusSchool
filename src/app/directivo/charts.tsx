@@ -17,20 +17,20 @@ export function AlumnosPorNivelChart({ data }: { data: { level: string; alumnos:
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4dcc8" />
         <XAxis dataKey="level" tick={{ fontSize: 12 }} />
         <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
         <Tooltip />
-        <Bar dataKey="alumnos" fill="#d92626" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="alumnos" fill="#1B2A56" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
 }
 
 const PAGO_COLORS: Record<string, string> = {
-  PAGADO: "#16a34a",
-  PENDIENTE: "#d97706",
-  VENCIDO: "#dc2626",
+  PAGADO: "#1B2A56",
+  PENDIENTE: "#C98A2E",
+  VENCIDO: "#C8102E",
 };
 
 export function EstadoPagosChart({ data }: { data: { status: string; cantidad: number }[] }) {

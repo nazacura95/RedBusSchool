@@ -5,7 +5,7 @@ type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
   primary: "bg-primary-500 text-white hover:bg-primary-600",
-  secondary: "bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50",
+  secondary: "bg-neutral-100 text-neutral-700 hover:bg-neutral-200",
   ghost: "bg-transparent text-neutral-700 hover:bg-neutral-100",
   danger: "bg-danger-500 text-white hover:bg-danger-700",
 };
@@ -24,7 +24,7 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size }) {
   return (
     <button
-      className={`rounded-lg font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`rounded-full font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     />
   );

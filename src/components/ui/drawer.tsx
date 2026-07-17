@@ -21,10 +21,10 @@ export function Drawer({
     <div className="fixed inset-0 z-40">
       <button
         aria-label="Cerrar"
-        className="absolute inset-0 bg-neutral-900/50"
+        className="absolute inset-0 bg-neutral-900/40"
         onClick={onClose}
       />
-      <div className="absolute right-0 top-0 z-50 flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-xl">
+      <div className="absolute right-0 top-0 z-50 flex h-full w-full max-w-[400px] flex-col overflow-y-auto bg-white shadow-lg">
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-neutral-200 bg-white px-6 py-4">
           <div>
             <h2 className="text-lg font-bold text-neutral-900">{title}</h2>

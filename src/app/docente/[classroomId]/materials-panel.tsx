@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, ExternalLink } from "lucide-react";
+import { Trash2, ExternalLink, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -84,7 +84,15 @@ export function MaterialsPanel({
 
       <div className="mt-6 space-y-2">
         {materials.length === 0 && (
-          <p className="text-sm text-neutral-500">Todavía no subiste materiales.</p>
+          <div className="flex items-center gap-4 rounded-lg border border-neutral-200 bg-white p-8">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent-50 text-accent-500">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-neutral-900">Sin materiales</p>
+              <p className="text-sm text-neutral-600">Todavía no subiste materiales.</p>
+            </div>
+          </div>
         )}
         {materials.map((m) => (
           <div

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
-import { Download } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 
 const REPORTS = [
   { type: "alumnos", label: "Alumnos", description: "Nombre, email, DNI, teléfono, aulas y fecha de alta." },
@@ -25,7 +25,10 @@ export default async function ReportesPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {REPORTS.map((r) => (
           <Card key={r.type}>
-            <h3 className="font-semibold text-neutral-900">{r.label}</h3>
+            <span className="flex h-11 w-11 items-center justify-center rounded-md bg-accent-50 text-accent-500">
+              <FileText className="h-5 w-5" />
+            </span>
+            <h3 className="mt-3 font-semibold text-neutral-900">{r.label}</h3>
             <p className="mt-1 text-sm text-neutral-500">{r.description}</p>
             <a
               href={`/api/reports/${r.type}`}

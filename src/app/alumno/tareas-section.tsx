@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ClipboardList } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/input";
@@ -63,7 +64,15 @@ export function TareasSection({ initialAssignments }: { initialAssignments: Assi
     <Card>
       <h3 className="mb-4 font-semibold text-neutral-900">Tareas</h3>
       {assignments.length === 0 ? (
-        <p className="text-sm text-neutral-500">No tenés tareas asignadas por el momento.</p>
+        <div className="flex items-center gap-4 rounded-lg border border-neutral-200 bg-white p-8">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent-50 text-accent-500">
+            <ClipboardList className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-semibold text-neutral-900">Sin tareas asignadas</p>
+            <p className="text-sm text-neutral-600">No tenés tareas asignadas por el momento.</p>
+          </div>
+        </div>
       ) : (
         <div className="space-y-3">
           {assignments.map((a) => {
@@ -109,7 +118,7 @@ export function TareasSection({ initialAssignments }: { initialAssignments: Assi
                       value={draft}
                       onChange={(e) => setDraft(e.target.value)}
                       rows={4}
-                      className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                      className="w-full rounded-md border-[1.5px] border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                       placeholder="Escribí tu respuesta acá..."
                     />
                     <div className="flex gap-2">

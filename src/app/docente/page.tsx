@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AppShell } from "@/components/app-shell";
@@ -26,7 +27,15 @@ export default async function DocenteDashboard() {
       <Card>
         <h3 className="mb-4 font-semibold text-neutral-900">Mis aulas</h3>
         {!profile || profile.classrooms.length === 0 ? (
-          <p className="text-sm text-neutral-500">Todavía no tenés aulas asignadas.</p>
+          <div className="flex items-center gap-4 rounded-lg border border-neutral-200 bg-white p-8">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent-50 text-accent-500">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-neutral-900">Sin aulas asignadas</p>
+              <p className="text-sm text-neutral-600">Todavía no tenés aulas asignadas.</p>
+            </div>
+          </div>
         ) : (
           <Table>
             <Thead>

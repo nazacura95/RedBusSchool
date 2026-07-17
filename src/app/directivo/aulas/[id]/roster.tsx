@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { EnrollmentStatus } from "@prisma/client";
+import { Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,44 +52,49 @@ export function Roster({
         </Button>
       </div>
 
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Nombre</Th>
-            <Th>DNI</Th>
-            <Th>Estado</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {initialEnrollments.map((e) => (
-            <Tr key={e.id}>
-              <Td className="font-medium text-neutral-900">{e.student.user.name}</Td>
-              <Td>{e.student.dni ?? "—"}</Td>
-              <Td>
-                <div className="flex items-center gap-2">
-                  <EnrollmentStatusBadge status={e.status} />
-                  <select
-                    className={selectClass}
-                    defaultValue={e.status}
-                    onChange={(ev) => handleStatusChange(e.id, ev.target.value)}
-                  >
-                    <option value="ACTIVA">Activa</option>
-                    <option value="PAUSADA">Pausada</option>
-                    <option value="FINALIZADA">Finalizada</option>
-                  </select>
-                </div>
-              </Td>
-            </Tr>
-          ))}
-          {initialEnrollments.length === 0 && (
+      {initialEnrollments.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-10 text-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-md bg-accent-50 text-accent-500">
+            <Users className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-medium text-neutral-900">Todavía no hay alumnos inscriptos</p>
+            <p className="text-sm text-neutral-500">Inscribí al primer alumno para armar esta aula.</p>
+          </div>
+        </div>
+      ) : (
+        <Table>
+          <Thead>
             <Tr>
-              <Td colSpan={3} className="text-center text-neutral-500">
-                Todavía no hay alumnos inscriptos en esta aula.
-              </Td>
+              <Th>Nombre</Th>
+              <Th>DNI</Th>
+              <Th>Estado</Th>
             </Tr>
-          )}
-        </Tbody>
-      </Table>
+          </Thead>
+          <Tbody>
+            {initialEnrollments.map((e) => (
+              <Tr key={e.id}>
+                <Td className="font-medium text-neutral-900">{e.student.user.name}</Td>
+                <Td>{e.student.dni ?? "—"}</Td>
+                <Td>
+                  <div className="flex items-center gap-2">
+                    <EnrollmentStatusBadge status={e.status} />
+                    <select
+                      className={selectClass}
+                      defaultValue={e.status}
+                      onChange={(ev) => handleStatusChange(e.id, ev.target.value)}
+                    >
+                      <option value="ACTIVA">Activa</option>
+                      <option value="PAUSADA">Pausada</option>
+                      <option value="FINALIZADA">Finalizada</option>
+                    </select>
+                  </div>
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      )}
 
       {showEnroll && (
         <EnrollForm

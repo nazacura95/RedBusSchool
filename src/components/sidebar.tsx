@@ -24,31 +24,29 @@ const roleNav: Record<Role, { label: string; href: string; icon: LucideIcon }> =
 
 const roleOrder: Role[] = ["DIRECTIVO", "DOCENTE", "ALUMNO"];
 
+function navLinkClass(active: boolean) {
+  return `relative flex items-center gap-3 rounded-md border-l-[3px] px-3 py-2.5 text-sm transition-colors ${
+    active
+      ? "border-primary-500 bg-white/8 font-semibold text-white"
+      : "border-transparent text-accent-100 hover:bg-white/8 hover:text-white"
+  }`;
+}
+
 export function Sidebar({ roles, onNavigate }: { roles: Role[]; onNavigate?: () => void }) {
   const pathname = usePathname();
   const items = roleOrder.filter((r) => roles.includes(r)).map((r) => roleNav[r]);
 
   return (
-    <div className="flex h-full w-64 flex-col bg-neutral-900 text-neutral-300">
-      <div className="flex h-16 items-center gap-2 border-b border-neutral-800 px-5">
-        <Image src="/brand/logo-256.png" alt="Redbus School of English" width={28} height={28} className="h-7 w-7 shrink-0" />
-        <span className="truncate font-bold text-white">Redbus School</span>
+    <div className="flex h-full w-[232px] flex-col gap-1 bg-accent-600 p-3.5">
+      <div className="flex items-center gap-2 px-2.5 pb-5 pt-1.5">
+        <Image src="/brand/logo-256.png" alt="Redbus School of English" width={26} height={26} className="h-6.5 w-6.5 shrink-0" />
+        <span className="truncate font-serif text-base font-bold text-white">Redbus School</span>
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex flex-1 flex-col gap-1">
         {items.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                active
-                  ? "bg-primary-500/15 text-primary-400"
-                  : "text-neutral-400 hover:bg-neutral-800 hover:text-white"
-              }`}
-            >
-              {active && <span className="absolute -left-3 top-0 h-full w-[3px] rounded-r bg-primary-500" />}
+            <Link key={item.href} href={item.href} onClick={onNavigate} className={navLinkClass(active)}>
               <item.icon className="h-4 w-4" />
               {item.label}
             </Link>
@@ -58,17 +56,7 @@ export function Sidebar({ roles, onNavigate }: { roles: Role[]; onNavigate?: () 
           directivoExtras.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-primary-500/15 text-primary-400"
-                    : "text-neutral-400 hover:bg-neutral-800 hover:text-white"
-                }`}
-              >
-                {active && <span className="absolute -left-3 top-0 h-full w-[3px] rounded-r bg-primary-500" />}
+              <Link key={item.href} href={item.href} onClick={onNavigate} className={navLinkClass(active)}>
                 <item.icon className="h-4 w-4" />
                 {item.label}
               </Link>

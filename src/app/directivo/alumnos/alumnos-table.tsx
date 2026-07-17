@@ -24,7 +24,7 @@ type StudentListItem = {
 type ClassroomOption = { id: string; name: string };
 
 const selectClass =
-  "rounded-lg border border-neutral-300 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30";
+  "rounded-md border-[1.5px] border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30";
 
 export function AlumnosTable({
   initialStudents,

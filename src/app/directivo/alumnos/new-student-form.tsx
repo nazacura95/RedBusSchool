@@ -53,13 +53,21 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} required />
+          <Input
+            id="email"
+            type="email"
+            autoComplete="off"
+            value={form.email}
+            onChange={(e) => set("email", e.target.value)}
+            required
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Contraseña inicial</Label>
           <Input
             id="password"
             type="password"
+            autoComplete="new-password"
             value={form.password}
             onChange={(e) => set("password", e.target.value)}
             required

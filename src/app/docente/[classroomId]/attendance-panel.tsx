@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
@@ -63,7 +64,15 @@ export function AttendancePanel({ classroomId, students }: { classroomId: string
       </div>
 
       {students.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-500">No hay alumnos activos en esta aula.</p>
+        <div className="mt-4 flex items-center gap-4 rounded-lg border border-neutral-200 bg-white p-8">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent-50 text-accent-500">
+            <Users className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-semibold text-neutral-900">Sin alumnos activos</p>
+            <p className="text-sm text-neutral-600">No hay alumnos activos en esta aula.</p>
+          </div>
+        </div>
       ) : (
         <>
           <div className="mt-4 space-y-2">

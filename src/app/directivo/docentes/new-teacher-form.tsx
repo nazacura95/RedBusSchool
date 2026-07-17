@@ -55,6 +55,7 @@ export function NewTeacherForm({
             id="email"
             type="email"
             required
+            autoComplete="off"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -65,6 +66,7 @@ export function NewTeacherForm({
             id="password"
             type="password"
             required
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />

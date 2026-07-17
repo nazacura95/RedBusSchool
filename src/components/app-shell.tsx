@@ -37,7 +37,7 @@ export function AppShell({
             className="absolute inset-0 bg-neutral-900/50"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="relative z-50 h-full w-64">
+          <div className="relative z-50 h-full w-[232px]">
             <button
               aria-label="Cerrar menú"
               onClick={() => setDrawerOpen(false)}
@@ -50,7 +50,7 @@ export function AppShell({
         </div>
       )}
 
-      <div className="lg:pl-64">
+      <div className="lg:pl-[232px]">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-neutral-200 bg-white px-4 lg:px-8">
           <div className="flex items-center gap-3">
             <button
@@ -60,7 +60,7 @@ export function AppShell({
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-xl font-bold text-neutral-900">{title}</h1>
+            <h1 className="text-xl font-semibold text-neutral-900">{title}</h1>
           </div>
 
           <div className="relative">

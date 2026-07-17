@@ -1,8 +1,6 @@
-import { signIn } from "@/lib/auth";
-import { AuthError } from "next-auth";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Users,
   BookOpen,
@@ -19,31 +17,10 @@ import {
   Award,
   LucideIcon,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { StatTile } from "@/components/ui/stat-tile";
-import { Input, Label } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { LinkButton } from "@/components/ui/link-button";
 import { LandingNav } from "@/components/landing-nav";
-import { LoginRolePicker } from "@/components/login-role-picker";
+import { LinkButton } from "@/components/ui/link-button";
+import { Card } from "@/components/ui/card";
 import { LeadForm } from "./lead-form";
-
-async function login(formData: FormData) {
-  "use server";
-  try {
-    await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
-      redirectTo: "/",
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      redirect("/?error=1#login");
-    }
-    throw error;
-  }
-}
 
 const niveles: { badge: string; text: string; icon: LucideIcon }[] = [
   { badge: "Kids (6-10 años)", text: "Primeras palabras y juegos en inglés", icon: Baby },
@@ -53,143 +30,191 @@ const niveles: { badge: string; text: string; icon: LucideIcon }[] = [
   { badge: "Avanzado", text: "Conversación y preparación de exámenes", icon: Award },
 ];
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
-  const { error } = await searchParams;
+const placeholderGallery = [
+  "https://images.pexels.com/photos/6502822/pexels-photo-6502822.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  "https://images.pexels.com/photos/29242202/pexels-photo-29242202.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  "https://images.pexels.com/photos/5212342/pexels-photo-5212342.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  "https://images.pexels.com/photos/29253498/pexels-photo-29253498.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  "https://images.pexels.com/photos/28905449/pexels-photo-28905449.jpeg?auto=compress&cs=tinysrgb&w=1000",
+];
 
+// Mosaic pattern for a 5-photo cycle: big tile, two small, two wide.
+const gallerySpans = [
+  "col-span-2 row-span-2",
+  "",
+  "",
+  "col-span-2",
+  "col-span-2",
+];
+
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
   const [alumnos, docentes, images] = await Promise.all([
     prisma.studentProfile.count(),
     prisma.teacherProfile.count(),
     prisma.siteImage.findMany({ orderBy: { order: "asc" } }),
   ]);
 
+  const gallery =
+    images.length > 0
+      ? images.map((img) => ({ url: img.url, caption: img.caption ?? "Redbus School" }))
+      : placeholderGallery.map((url) => ({ url, caption: "Redbus School" }));
+  const heroImage = images[0]?.url ?? placeholderGallery[0];
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-neutral-50 text-neutral-900">
       <LandingNav />
 
       {/* Hero */}
-      <section className="bg-primary-50 py-16 md:py-24">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 md:grid-cols-2">
-          <div>
-            <span className="inline-flex rounded-full bg-primary-100 px-2.5 py-1 text-xs font-semibold text-primary-700">
-              Instituto de inglés
-            </span>
-            <h1 className="mt-4 text-3xl font-bold text-neutral-900 md:text-4xl">
-              Aprender inglés, de cerca.
-            </h1>
-            <p className="mt-4 text-lg text-neutral-600">
-              Clases con profesoras que además de enseñar, escuchan. Acompañamos a chicos y
-              adultos a hablar inglés con confianza.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <LinkButton href="#contacto" size="lg">
-                Quiero inscribirme
-              </LinkButton>
-              <LinkButton href="#login" variant="secondary" size="lg">
-                Ya soy alumno, ingresar
-              </LinkButton>
+      <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 py-16 md:grid-cols-[1.05fr_0.95fr] md:py-24">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
+            Instituto de inglés · José C. Paz
+          </span>
+          <h1 className="mt-4 text-[clamp(38px,5.4vw,64px)] font-semibold leading-[1.05] text-neutral-800">
+            Aprender inglés, de <em className="italic text-primary-500">cerca.</em>
+          </h1>
+          <p className="mt-4 max-w-[480px] text-lg text-neutral-700">
+            Clases con profesoras que además de enseñar, escuchan. Acompañamos a chicos y
+            adultos a hablar inglés con confianza.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-6">
+            <LinkButton href="#contacto" variant="primary" size="lg">
+              Quiero inscribirme
+            </LinkButton>
+            <Link href="/login" className="text-base font-semibold text-accent-500 hover:underline">
+              Ya soy alumno, ingresar →
+            </Link>
+          </div>
+          <div className="mt-10 grid grid-cols-3 gap-3">
+            <div>
+              <p className="font-serif text-[30px] font-bold text-accent-500">
+                {alumnos > 0 ? `${alumnos}+` : "150+"}
+              </p>
+              <p className="text-xs uppercase tracking-wide text-neutral-600">Alumnos</p>
             </div>
-            <div className="mt-10 grid grid-cols-3 gap-3">
-              <StatTile label="Alumnos" value={alumnos > 0 ? `${alumnos}+` : "150+"} icon={Users} tone="primary" />
-              <StatTile label="Profesores" value={docentes > 0 ? docentes : 7} icon={BookOpen} tone="accent" />
-              <StatTile label="Años" value="10+" icon={Heart} tone="info" />
+            <div>
+              <p className="font-serif text-[30px] font-bold text-accent-500">
+                {docentes > 0 ? docentes : 7}
+              </p>
+              <p className="text-xs uppercase tracking-wide text-neutral-600">Profesores</p>
+            </div>
+            <div>
+              <p className="font-serif text-[30px] font-bold text-accent-500">10+</p>
+              <p className="text-xs uppercase tracking-wide text-neutral-600">Años</p>
             </div>
           </div>
+        </div>
+
+        <div className="relative">
+          <div
+            className="absolute -inset-4 -z-10 rounded-[24px]"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(115deg,#1B2A56 0 22px,#C8102E 22px 44px,#FBF7EF 44px 50px)",
+            }}
+          />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://images.pexels.com/photos/6502822/pexels-photo-6502822.jpeg?auto=compress&cs=tinysrgb&w=1000"
+            src={heroImage}
             alt="Alumno tomando clase de inglés con su profesora"
-            className="aspect-[4/5] w-full rounded-xl object-cover"
+            className="aspect-[4/5] w-full rounded-[20px] object-cover shadow-lg"
           />
+          <div className="absolute -bottom-5 left-1/2 flex w-max -translate-x-1/2 items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm font-semibold text-accent-500 shadow-lg">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-500 text-white">
+              <Bus className="h-3.5 w-3.5" />
+            </span>
+            Desde 2019 · de barrio, para el barrio
+          </div>
         </div>
       </section>
 
       {/* Quiénes somos */}
       <section id="quienes-somos" className="mx-auto max-w-6xl px-4 py-16">
         <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://images.pexels.com/photos/5212342/pexels-photo-5212342.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt="Profesora dando clase de inglés a un grupo de alumnos"
+              className="aspect-[4/3] w-full rounded-[20px] object-cover shadow-lg"
+            />
+            <div className="absolute inset-x-4 bottom-4 rounded-lg bg-accent-500/90 px-4 py-3 text-sm font-medium text-white backdrop-blur">
+              🎓 Raíces británicas · Colectivo de dos pisos, nuestro sello
+            </div>
+          </div>
           <div>
-            <p className="text-sm font-semibold uppercase text-primary-600">Quiénes somos</p>
-            <h2 className="mt-2 text-2xl font-bold text-neutral-900 md:text-3xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary-500">Quiénes somos</p>
+            <h2 className="mt-2 text-2xl font-semibold text-neutral-800 md:text-3xl">
               Un instituto de barrio, con estructura de escuela grande
             </h2>
-            <p className="mt-4 max-w-2xl text-neutral-600">
+            <p className="mt-4 text-neutral-700">
               Somos Redbus School of English: un equipo de 7 profesores —incluidas nosotras, las
-              dueñas, que seguimos dando clases todas las semanas— para unos 150 alumnos de todas
-              las edades. Dejamos atrás los cuadernos de papel: acá todo queda registrado, así que
-              padres y alumnos siempre saben cómo viene el proceso.
+              dueñas, que seguimos dando clases todas las semanas— para unos 150 alumnos de
+              todas las edades. Dejamos atrás los cuadernos de papel: acá todo queda registrado,
+              así que padres y alumnos siempre saben cómo viene el proceso.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-6">
-              <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-                <Landmark className="h-6 w-6 text-primary-600" />
+            <p className="mt-4 text-neutral-700">
+              Además de las clases, organizamos charlas de práctica estilo &quot;tea time&quot;:
+              un ratito relajado para animarse a hablar, tomar algo rico y perderle el miedo al
+              inglés en grupo.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-5">
+              <span className="flex items-center gap-2 text-sm font-medium text-neutral-600">
+                <Landmark className="h-5 w-5 text-primary-500" />
                 Programa con raíces británicas
               </span>
-              <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-                <Bus className="h-6 w-6 text-primary-600" />
-                El clásico colectivo de dos pisos, nuestro sello
+              <span className="flex items-center gap-2 text-sm font-medium text-neutral-600">
+                <Bus className="h-5 w-5 text-primary-500" />
+                El clásico colectivo de dos pisos
               </span>
-              <span className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-                <Coffee className="h-6 w-6 text-primary-600" />
-                Charlas de práctica, estilo &quot;tea time&quot;
+              <span className="flex items-center gap-2 text-sm font-medium text-neutral-600">
+                <Coffee className="h-5 w-5 text-primary-500" />
+                Charlas estilo &quot;tea time&quot;
               </span>
             </div>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.pexels.com/photos/5212342/pexels-photo-5212342.jpeg?auto=compress&cs=tinysrgb&w=1000"
-            alt="Profesora dando clase de inglés a un grupo de alumnos"
-            className="aspect-[4/3] w-full rounded-xl object-cover"
-          />
         </div>
+
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card>
-            <Users className="h-6 w-6 text-primary-600" />
-            <h3 className="mt-3 font-semibold text-neutral-900">Grupos reducidos</h3>
-            <p className="mt-1 text-sm text-neutral-600">
-              Clases pensadas para que cada alumno hable, no solo escuche.
-            </p>
-          </Card>
-          <Card>
-            <BookOpen className="h-6 w-6 text-accent-600" />
-            <h3 className="mt-3 font-semibold text-neutral-900">Seguimiento real</h3>
-            <p className="mt-1 text-sm text-neutral-600">
-              Registro digital de asistencia, tareas y progreso, sin cuadernos perdidos.
-            </p>
-          </Card>
-          <Card>
-            <Heart className="h-6 w-6 text-info-500" />
-            <h3 className="mt-3 font-semibold text-neutral-900">Trato cercano</h3>
-            <p className="mt-1 text-sm text-neutral-600">
-              Profesoras que conocen a cada alumno por su nombre.
-            </p>
-          </Card>
+          {[
+            { icon: Users, title: "Grupos reducidos", text: "Clases pensadas para que cada alumno hable, no solo escuche." },
+            { icon: BookOpen, title: "Seguimiento real", text: "Registro digital de asistencia, tareas y progreso, sin cuadernos perdidos." },
+            { icon: Heart, title: "Trato cercano", text: "Profesoras que conocen a cada alumno por su nombre." },
+          ].map((f) => (
+            <Card key={f.title} className="rounded-lg">
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-50 text-primary-500">
+                <f.icon className="h-5 w-5" />
+              </span>
+              <h3 className="mt-3 font-semibold text-neutral-800">{f.title}</h3>
+              <p className="mt-1 text-sm text-neutral-700">{f.text}</p>
+            </Card>
+          ))}
         </div>
       </section>
 
       {/* Niveles */}
-      <section id="niveles" className="bg-neutral-50 py-16">
+      <section id="niveles" className="bg-accent-500 py-16">
         <div className="mx-auto max-w-6xl px-4">
-          <p className="text-sm font-semibold uppercase text-primary-600">Niveles</p>
-          <h2 className="mt-2 text-2xl font-bold text-neutral-900 md:text-3xl">
+          <p className="text-sm font-semibold uppercase tracking-wide text-accent-100">Niveles</p>
+          <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">
             Un camino claro, desde cero hasta fluidez
           </h2>
           <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">
-            {niveles.map((n) => (
-              <Card key={n.badge}>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-600">
-                  <n.icon className="h-5 w-5" />
+            {niveles.map((n, i) => (
+              <div key={n.badge} className="rounded-lg border border-white/14 bg-white/6 p-5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 font-serif text-sm font-bold text-white">
+                  {i + 1}
                 </span>
-                <div className="mt-3">
-                  <Badge tone="neutral">{n.badge}</Badge>
-                </div>
-                <p className="mt-3 text-sm text-neutral-600">{n.text}</p>
-              </Card>
+                <h3 className="mt-3 font-serif font-semibold text-white">{n.badge}</h3>
+                <p className="mt-2 text-sm text-accent-100">{n.text}</p>
+              </div>
             ))}
           </div>
           <div className="mt-10 text-center">
-            <LinkButton href="#contacto" variant="secondary">
+            <LinkButton href="#contacto" variant="primary">
               Ver todos los horarios
             </LinkButton>
           </div>
@@ -198,125 +223,86 @@ export default async function Home({
 
       {/* Galería */}
       <section id="galeria" className="mx-auto max-w-6xl px-4 py-16">
-        <p className="text-sm font-semibold uppercase text-primary-600">Galería</p>
-        <h2 className="mt-2 text-2xl font-bold text-neutral-900 md:text-3xl">
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary-500">Galería</p>
+        <h2 className="mt-2 text-2xl font-semibold text-neutral-800 md:text-3xl">
           Así se vive Redbus School of English
         </h2>
 
-        {images.length > 0 ? (
-          <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {images.map((img) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={img.id}
-                src={img.url}
-                alt={img.caption ?? "Foto de Redbus School of English"}
-                className="h-48 w-full rounded-lg object-cover"
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="mt-10 border-2 border-dashed border-neutral-200 bg-neutral-50 py-16 px-8 text-center">
-            <Camera className="mx-auto h-12 w-12 text-neutral-300" />
-            <p className="mt-4 font-medium text-neutral-500">
-              Muy pronto vas a poder ver fotos de nuestras clases y eventos acá.
-            </p>
-            <p className="mt-1 text-sm text-neutral-400">Estamos armando el álbum — volvé pronto.</p>
-          </Card>
+        <div className="mt-10 grid auto-rows-[170px] grid-cols-2 gap-3 md:grid-cols-4">
+          {gallery.map((img, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={img.url + i}
+              src={img.url}
+              alt={img.caption}
+              className={`h-full w-full rounded-lg object-cover ${gallerySpans[i % gallerySpans.length]}`}
+            />
+          ))}
+        </div>
+
+        {images.length === 0 && (
+          <p className="mt-6 flex items-center justify-center gap-2 text-sm text-neutral-600">
+            <Camera className="h-4 w-4" />
+            Muy pronto vas a poder ver fotos reales de nuestras clases y eventos acá.
+          </p>
         )}
       </section>
 
-      {/* CTA / Contacto */}
-      <section id="contacto" className="bg-primary-600 py-14 text-center text-white">
-        <div className="mx-auto max-w-2xl px-4">
-          <h2 className="text-2xl font-bold text-white md:text-3xl">¿Querés sumarte?</h2>
-          <p className="mt-3 text-primary-50">
-            Dejanos tus datos y te contamos los horarios disponibles y te ayudamos a elegir el
-            nivel.
-          </p>
+      {/* Contacto */}
+      <section id="contacto" className="bg-neutral-100 py-16">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 md:grid-cols-2">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary-500">Contacto</p>
+            <h2 className="mt-2 text-2xl font-semibold text-neutral-800 md:text-3xl">¿Querés sumarte?</h2>
+            <p className="mt-3 text-neutral-700">
+              Dejanos tus datos y te contamos los horarios disponibles y te ayudamos a elegir el
+              nivel.
+            </p>
 
-          <LeadForm />
-
-          <a
-            href="https://wa.me/5491151385114"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary-100 hover:text-white"
-          >
-            <MessageCircle className="h-4 w-4" />
-            ¿Preferís escribirnos directo? Hablanos por WhatsApp
-          </a>
-
-          <p className="mt-6 text-sm text-primary-100">
-            Av. Croacia 2499-2569, B1666KDM José C. Paz, Buenos Aires · Lun a Vie 9 a 20 hs
-          </p>
-          <iframe
-            src={`https://www.google.com/maps?q=${encodeURIComponent(
-              "Redbus School of English, Av. Croacia 2499-2569, B1666KDM José C. Paz, Buenos Aires, Argentina"
-            )}&output=embed`}
-            width="100%"
-            height="300"
-            style={{ border: 0 }}
-            loading="lazy"
-            className="mt-8 rounded-xl"
-          />
-        </div>
-      </section>
-
-      {/* Login */}
-      <section id="login" className="bg-white py-16">
-        <div className="mx-auto max-w-md px-4">
-          <Card className="p-8 shadow-md">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50">
-              <Image src="/brand/logo-256.png" alt="Redbus School of English" width={32} height={32} className="h-8 w-8" />
+            <div className="mt-6">
+              <LeadForm />
             </div>
-            <h2 className="mt-4 text-center text-xl font-bold text-neutral-900">
-              Ingresá a tu cuenta
-            </h2>
-            <LoginRolePicker />
 
-            {error && (
-              <div className="mt-6 rounded-lg bg-danger-50 px-3.5 py-2.5 text-sm text-danger-700">
-                Email o contraseña incorrectos.
-              </div>
-            )}
+            <a
+              href="https://wa.me/5491151385114"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-[1.5px] border-[#25A055] px-5 py-3 text-sm font-semibold text-[#1B7A3D] transition-colors hover:bg-[#25A055]/10"
+            >
+              <MessageCircle className="h-4 w-4" />
+              ¿Preferís escribirnos directo? Hablanos por WhatsApp →
+            </a>
+          </div>
 
-            <form action={login} className="mt-6 space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" required autoComplete="email" />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <span className="cursor-not-allowed text-xs font-medium text-primary-600">
-                    ¿Olvidaste tu contraseña?
-                  </span>
-                </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                />
-              </div>
-              <Button type="submit" size="lg" className="w-full">
-                Ingresar
-              </Button>
-            </form>
+          <Card className="rounded-[20px] border-0 bg-accent-500 p-8 text-accent-100">
+            <h3 className="text-xl font-semibold text-white">Encontranos</h3>
+            <div className="mt-4 space-y-2 text-sm">
+              <p>Av. Croacia 2499-2569, B1666KDM José C. Paz, Buenos Aires</p>
+              <p>Lun a Vie 9 a 20 hs</p>
+              <p>hola@redbusschool.com</p>
+            </div>
+            <iframe
+              src={`https://www.google.com/maps?q=${encodeURIComponent(
+                "Redbus School of English, Av. Croacia 2499-2569, B1666KDM José C. Paz, Buenos Aires, Argentina"
+              )}&output=embed`}
+              width="100%"
+              height="220"
+              style={{ border: 0 }}
+              loading="lazy"
+              className="mt-6 rounded-lg"
+            />
           </Card>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-neutral-900 py-10 text-neutral-300">
+      <footer className="bg-neutral-900 py-10 text-neutral-400">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div>
               <div className="flex items-center gap-2">
-                <Image src="/brand/logo-256.png" alt="Redbus School of English" width={28} height={28} className="h-7 w-7" />
-                <span className="font-bold text-white">Redbus School of English</span>
+                <Image src="/brand/logo-256.png" alt="Redbus School of English" width={28} height={28} className="h-7 w-7 rounded-full" />
+                <span className="font-serif font-bold text-white">Redbus School of English</span>
               </div>
               <p className="mt-3 text-sm">Instituto de inglés de barrio, con seguimiento real.</p>
             </div>
@@ -342,7 +328,7 @@ export default async function Home({
               </div>
             </div>
           </div>
-          <div className="mt-6 border-t border-neutral-800 pt-6 text-center text-xs text-neutral-500">
+          <div className="mt-6 border-t border-neutral-800 pt-6 text-center text-xs">
             © 2026 Redbus School of English. Todos los derechos reservados.
           </div>
         </div>

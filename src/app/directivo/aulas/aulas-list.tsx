@@ -142,7 +142,7 @@ function NewAulaForm({
             id="teacher"
             value={teacherId}
             onChange={(e) => setTeacherId(e.target.value)}
-            className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+            className="w-full rounded-md border-[1.5px] border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
             required
           >
             {teachers.length === 0 && <option value="">Sin docentes disponibles</option>}
