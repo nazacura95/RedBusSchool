@@ -79,6 +79,13 @@ export default async function LoginPage({
               Ingresar
             </Button>
           </form>
+
+          <p className="mt-4 text-center text-sm text-neutral-500">
+            ¿Primera vez que entrás?{" "}
+            <Link href="/recuperar" className="font-medium text-primary-500 hover:underline">
+              Activá tu cuenta y elegí tu contraseña
+            </Link>
+          </p>
         </div>
       </div>
     </div>
