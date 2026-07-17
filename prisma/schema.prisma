@@ -273,6 +273,35 @@ model Lead {
   @@map("leads")
 }
 
+// Conversación de WhatsApp con un número (prospecto, alumno/familia o consulta de
+// directivo). Guarda en qué paso del guion de prospecto está y si el bot puede
+// seguir escribiéndole (se apaga con la palabra clave de "stop").
+model WhatsAppConversation {
+  id         String            @id @default(cuid())
+  phone      String            @unique // dígitos, formato 549XXXXXXXXXX (sin @c.us)
+  botEnabled Boolean           @default(true)
+  flowStep   Int               @default(0) // 0=nuevo, 1=preguntó nivel, 2=preguntó turno, 3=guion completo
+  flowData   Json?             // respuestas acumuladas del guion (paraQuien, nivel, turno)
+  leadId     String?           // Lead creado al completar el guion, si aplica
+  messages   WhatsAppMessage[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@map("whatsapp_conversations")
+}
+
+// Un mensaje individual, entrante o saliente, de una conversación de WhatsApp.
+model WhatsAppMessage {
+  id             String               @id @default(cuid())
+  conversationId String
+  conversation   WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction      String               // "in" | "out"
+  body           String
+  createdAt      DateTime             @default(now())
+
+  @@map("whatsapp_messages")
+}
+
 // Foto de la galería pública del sitio de marketing (institución/eventos).
 model SiteImage {
   id        String   @id @default(cuid())
