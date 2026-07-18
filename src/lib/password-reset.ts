@@ -2,8 +2,14 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppText } from "@/lib/openwa";
 import { normalizePhone } from "@/lib/phone";
+import { checkRateLimit, clearRateLimit } from "@/lib/rate-limit";
 
 const MISMATCH_ERROR = "No encontramos una cuenta habilitada con ese email, DNI y teléfono.";
+const RATE_LIMIT_ERROR = "Demasiados intentos. Probá de nuevo en 15 minutos.";
+
+function normalizeDni(raw: string): string {
+  return raw.replace(/\D/g, "");
+}
 
 async function getProfile(userId: string): Promise<{ dni: string | null; phone: string | null } | null> {
   const [student, teacher] = await Promise.all([
@@ -16,16 +22,22 @@ async function getProfile(userId: string): Promise<{ dni: string | null; phone: 
 // activación de cuenta nueva y recuperación de contraseña son el mismo flujo: si los 3 datos
 // coinciden con el legajo y el directivo habilitó la cuenta, se puede elegir contraseña.
 export async function activateOrResetPassword(email: string, dni: string, phone: string, newPassword: string) {
-  const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const allowed = await checkRateLimit(`activar:${normalizedEmail}`);
+  if (!allowed) return { ok: false as const, error: RATE_LIMIT_ERROR };
+
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (!user || !user.enabled) return { ok: false as const, error: MISMATCH_ERROR };
 
   const profile = await getProfile(user.id);
-  const dniMatch = profile?.dni && profile.dni.trim() === dni.trim();
+  const dniMatch = profile?.dni && normalizeDni(profile.dni) === normalizeDni(dni);
   const phoneMatch = profile?.phone && normalizePhone(profile.phone) === normalizePhone(phone);
   if (!dniMatch || !phoneMatch) return { ok: false as const, error: MISMATCH_ERROR };
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
   await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  await clearRateLimit(`activar:${normalizedEmail}`);
 
   return { ok: true as const };
 }

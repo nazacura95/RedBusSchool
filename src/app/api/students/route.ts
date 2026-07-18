@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, PUBLIC_USER_SELECT } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
 
   const students = await prisma.studentProfile.findMany({
     include: {
-      user: true,
+      user: { select: PUBLIC_USER_SELECT },
       enrollments: { include: { classroom: true }, orderBy: { startDate: "desc" } },
       payments: { orderBy: { period: "desc" }, take: 1 },
     },
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
         birthDate: birthDate ? new Date(birthDate) : null,
         user: { create: { name, email, passwordHash, roles: ["ALUMNO"], enabled: false } },
       },
-      include: { user: true },
+      include: { user: { select: PUBLIC_USER_SELECT } },
     });
     return NextResponse.json(student);
   } catch (err) {

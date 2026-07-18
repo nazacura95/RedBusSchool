@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, PUBLIC_USER_SELECT } from "@/lib/prisma";
 import { sendWelcomeWhatsApp } from "@/lib/password-reset";
 import { NextResponse } from "next/server";
 
@@ -13,7 +13,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const teacher = await prisma.teacherProfile.findUnique({
     where: { id },
     include: {
-      user: true,
+      user: { select: PUBLIC_USER_SELECT },
       classrooms: {
         select: {
           id: true,

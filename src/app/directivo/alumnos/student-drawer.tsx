@@ -47,6 +47,9 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactForm, setContactForm] = useState({ name: "", relationship: "Madre", phone: "", email: "" });
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ period: "", amount: "", method: "Efectivo", paid: true });
+  const [savingPayment, setSavingPayment] = useState(false);
   const [saving, setSaving] = useState(false);
   const [togglingAccess, setTogglingAccess] = useState(false);
 
@@ -87,6 +90,23 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
       setStudent((prev) => (prev ? { ...prev, contacts: [...prev.contacts, contact] } : prev));
       setContactForm({ name: "", relationship: "Madre", phone: "", email: "" });
       setShowContactForm(false);
+    }
+  }
+
+  async function handleAddPayment(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingPayment(true);
+    const res = await fetch(`/api/students/${studentId}/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(paymentForm),
+    });
+    setSavingPayment(false);
+    if (res.ok) {
+      const payment = await res.json();
+      setStudent((prev) => (prev ? { ...prev, payments: [payment, ...prev.payments] } : prev));
+      setPaymentForm({ period: "", amount: "", method: "Efectivo", paid: true });
+      setShowPaymentForm(false);
     }
   }
 
@@ -265,6 +285,59 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
                 )}
               </Tbody>
             </Table>
+            {showPaymentForm ? (
+              <form onSubmit={handleAddPayment} className="mt-3 space-y-2 rounded-lg border border-neutral-200 p-3">
+                <Input
+                  placeholder="Período (ej. 2026-07)"
+                  value={paymentForm.period}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, period: e.target.value })}
+                  required
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Monto"
+                  value={paymentForm.amount}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                  required
+                />
+                <select
+                  className={selectClass}
+                  value={paymentForm.method}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value })}
+                >
+                  {["Efectivo", "Transferencia", "Mercado Pago", "Otro"].map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <label className="flex items-center gap-2 text-sm text-neutral-700">
+                  <input
+                    type="checkbox"
+                    checked={paymentForm.paid}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, paid: e.target.checked })}
+                  />
+                  Marcar como pagado
+                </label>
+                <div className="flex gap-2">
+                  <Button type="submit" size="sm" disabled={savingPayment}>
+                    Guardar
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setShowPaymentForm(false)}>
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <button
+                onClick={() => setShowPaymentForm(true)}
+                className="mt-2 text-sm font-medium text-primary-600 hover:text-primary-700"
+              >
+                + Registrar pago
+              </button>
+            )}
           </DrawerSection>
 
           <DrawerSection title="Certificados">

@@ -56,6 +56,16 @@ model User {
   @@map("users")
 }
 
+// Contador simple de intentos fallidos (login, activar cuenta) por clave (ej. "login:mail@x.com").
+// ponytail: tabla en Postgres en vez de Redis/Upstash — alcanza para el volumen de un instituto chico.
+model LoginAttempt {
+  key         String   @id
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+
+  @@map("login_attempts")
+}
+
 // Legajo del alumno: datos personales e historial que no están en User.
 model StudentProfile {
   id           String   @id @default(cuid())

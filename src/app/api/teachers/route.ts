@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma, PUBLIC_USER_SELECT } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
 
   const teachers = await prisma.teacherProfile.findMany({
     include: {
-      user: true,
+      user: { select: PUBLIC_USER_SELECT },
       classrooms: { orderBy: { name: "asc" } },
     },
     orderBy: { user: { name: "asc" } },
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         hourlyRate: hourlyRate ? hourlyRate : null,
         user: { create: { name, email, passwordHash, roles: ["DOCENTE"], enabled: false } },
       },
-      include: { user: true },
+      include: { user: { select: PUBLIC_USER_SELECT } },
     });
     return NextResponse.json(teacher);
   } catch (err) {

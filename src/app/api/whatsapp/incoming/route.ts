@@ -36,9 +36,10 @@ export async function POST(req: Request) {
   const body = typeof data.body === "string" ? data.body : "";
   const phone = from.replace(/@c\.us$/i, "");
 
-  // defensa en profundidad: el filtro del webhook en OpenWA ya restringe el disparo
-  // a estos números, pero igual lo verificamos acá antes de tocar la base o responder.
-  if (!TEST_NUMBERS.includes(phone) || !body) {
+  // WHATSAPP_TEST_NUMBERS es opcional: si está seteada, restringe el bot a esos números
+  // (útil para probar sin exponerlo a desconocidos). Vacía/sin setear = responde a cualquiera,
+  // que es lo que hace falta una vez que el bot está en producción real.
+  if (!body || (TEST_NUMBERS.length > 0 && !TEST_NUMBERS.includes(phone))) {
     return NextResponse.json({ ok: true });
   }
 
