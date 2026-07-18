@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 
 export function Drawer({
@@ -15,6 +16,25 @@ export function Drawer({
   subtitle?: string;
   children: React.ReactNode;
 }) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocused.current = document.activeElement as HTMLElement;
+    panelRef.current?.focus();
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocused.current?.focus();
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
@@ -24,10 +44,17 @@ export function Drawer({
         className="absolute inset-0 bg-neutral-900/40"
         onClick={onClose}
       />
-      <div className="absolute right-0 top-0 z-50 flex h-full w-full max-w-[400px] flex-col overflow-y-auto bg-white shadow-lg">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="absolute right-0 top-0 z-50 flex h-full w-full max-w-[400px] flex-col overflow-y-auto bg-white shadow-lg focus:outline-none"
+      >
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-neutral-200 bg-white px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-neutral-900">{title}</h2>
+            <h2 id={titleId} className="text-lg font-bold text-neutral-900">{title}</h2>
             {subtitle && <p className="text-sm text-neutral-500">{subtitle}</p>}
           </div>
           <button

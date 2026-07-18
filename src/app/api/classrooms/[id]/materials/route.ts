@@ -1,6 +1,6 @@
 import { put, del } from "@vercel/blob";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 
 // ponytail: extension/mime → coarse label, not exhaustive, good enough for a Badge
@@ -23,10 +23,8 @@ async function assertOwner(classroomId: string, userId: string) {
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DOCENTE")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { session, response } = await requireRole("DOCENTE");
+  if (response) return response;
 
   const { id } = await params;
   if (!(await assertOwner(id, session.user.id))) {
@@ -54,10 +52,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DOCENTE")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { session, response } = await requireRole("DOCENTE");
+  if (response) return response;
 
   const { id } = await params;
   if (!(await assertOwner(id, session.user.id))) {

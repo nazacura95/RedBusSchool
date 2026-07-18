@@ -13,9 +13,20 @@ type ClassroomListItem = {
   id: string;
   name: string;
   level: string;
+  dayOfWeek: number[];
+  startTime: string | null;
+  endTime: string | null;
   teacher: { user: { name: string } };
   enrollments: { id: string }[];
 };
+
+const DAY_LABELS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+function scheduleLabel(c: Pick<ClassroomListItem, "dayOfWeek" | "startTime" | "endTime">) {
+  if (c.dayOfWeek.length === 0) return "—";
+  const days = c.dayOfWeek.map((d) => DAY_LABELS[d]).join("/");
+  return c.startTime ? `${days} ${c.startTime}${c.endTime ? `–${c.endTime}` : ""}` : days;
+}
 
 type TeacherOption = { id: string; user: { name: string } };
 
@@ -43,6 +54,7 @@ export function AulasList({
           <Tr>
             <Th>Aula</Th>
             <Th>Nivel</Th>
+            <Th>Horario</Th>
             <Th>Docente</Th>
             <Th>Alumnos activos</Th>
           </Tr>
@@ -58,13 +70,14 @@ export function AulasList({
               <Td>
                 <Badge tone="neutral">{c.level}</Badge>
               </Td>
+              <Td>{scheduleLabel(c)}</Td>
               <Td>{c.teacher.user.name}</Td>
               <Td>{c.enrollments.length}</Td>
             </Tr>
           ))}
           {initialClassrooms.length === 0 && (
             <Tr>
-              <Td colSpan={4} className="text-center text-neutral-500">
+              <Td colSpan={5} className="text-center text-neutral-500">
                 Todavía no hay aulas creadas.
               </Td>
             </Tr>
@@ -98,8 +111,15 @@ function NewAulaForm({
   const [name, setName] = useState("");
   const [level, setLevel] = useState("");
   const [teacherId, setTeacherId] = useState(teachers[0]?.id ?? "");
+  const [dayOfWeek, setDayOfWeek] = useState<number[]>([]);
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function toggleDay(day: number) {
+    setDayOfWeek((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,7 +129,7 @@ function NewAulaForm({
     const res = await fetch("/api/classrooms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, level, teacherId }),
+      body: JSON.stringify({ name, level, teacherId, dayOfWeek, startTime, endTime }),
     });
     setSaving(false);
     if (!res.ok) {
@@ -153,7 +173,36 @@ function NewAulaForm({
             ))}
           </select>
         </div>
-        {error && <p className="text-sm text-danger-700">{error}</p>}
+        <div className="space-y-1.5">
+          <Label>Días de clase</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {DAY_LABELS.map((label, day) => (
+              <button
+                key={day}
+                type="button"
+                onClick={() => toggleDay(day)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  dayOfWeek.includes(day)
+                    ? "border-primary-500 bg-primary-50 text-primary-700"
+                    : "border-neutral-200 text-neutral-600"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex-1 space-y-1.5">
+            <Label htmlFor="startTime">Desde</Label>
+            <Input id="startTime" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          </div>
+          <div className="flex-1 space-y-1.5">
+            <Label htmlFor="endTime">Hasta</Label>
+            <Input id="endTime" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          </div>
+        </div>
+        {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
         <Button type="submit" disabled={saving || !teacherId} className="w-full">
           {saving ? "Creando..." : "Crear aula"}
         </Button>

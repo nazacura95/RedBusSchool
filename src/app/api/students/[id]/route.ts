@@ -1,13 +1,11 @@
-import { auth } from "@/lib/auth";
 import { prisma, PUBLIC_USER_SELECT } from "@/lib/prisma";
-import { sendWelcomeWhatsApp } from "@/lib/password-reset";
+import { requireRole } from "@/lib/require-role";
+import { toggleAccountEnabled } from "@/lib/pending-account";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const { id } = await params;
   const student = await prisma.studentProfile.findUnique({
@@ -17,7 +15,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       contacts: { orderBy: { createdAt: "asc" } },
       enrollments: {
         include: {
-          classroom: { include: { teacher: { include: { user: true } } } },
+          classroom: { include: { teacher: { include: { user: { select: PUBLIC_USER_SELECT } } } } },
           attendances: { select: { present: true } },
         },
         orderBy: { startDate: "desc" },
@@ -33,10 +31,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const { id } = await params;
   const { enabled } = await req.json();
@@ -44,16 +40,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   }
 
-  const student = await prisma.studentProfile.findUnique({ where: { id }, include: { user: true } });
-  if (!student) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  const result = await toggleAccountEnabled(
+    () => prisma.studentProfile.findUnique({ where: { id }, include: { user: true } }),
+    enabled,
+  );
+  if (!result) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  const user = await prisma.user.update({ where: { id: student.userId }, data: { enabled } });
-
-  if (enabled && !student.user.enabled && student.phone) {
-    sendWelcomeWhatsApp(user.name, user.email, student.phone).catch((err) =>
-      console.error("No se pudo enviar bienvenida por WhatsApp", err),
-    );
-  }
-
-  return NextResponse.json({ enabled: user.enabled });
+  return NextResponse.json(result);
 }

@@ -31,7 +31,7 @@
   --color-neutral-200: #e4dcc8;
   --color-neutral-300: #d8cfb8;
   --color-neutral-400: #b4ac98;
-  --color-neutral-500: #9a9384;
+  --color-neutral-500: #756e5e; /* oscurecido: el valor anterior (#9a9384) daba 3.05:1 sobre blanco, bajo el 4.5:1 de WCAG AA */
   --color-neutral-600: #6b6555;
   --color-neutral-700: #4b4638;
   --color-neutral-800: #1b1b1e;

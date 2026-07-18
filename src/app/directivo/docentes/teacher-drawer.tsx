@@ -5,6 +5,7 @@ import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
+import { useToast } from "@/components/ui/toast";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -34,6 +35,8 @@ function ClassroomCard({ classroom }: { classroom: TeacherDetail["classrooms"][n
 export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClose: () => void }) {
   const [teacher, setTeacher] = useState<TeacherDetail | null>(null);
   const [togglingAccess, setTogglingAccess] = useState(false);
+  const [whatsappStatus, setWhatsappStatus] = useState<"sent" | "failed" | "skipped" | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetch(`/api/teachers/${teacherId}`)
@@ -44,6 +47,7 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
   async function handleToggleAccess() {
     if (!teacher) return;
     setTogglingAccess(true);
+    setWhatsappStatus(null);
     const res = await fetch(`/api/teachers/${teacherId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -51,8 +55,11 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
     });
     setTogglingAccess(false);
     if (res.ok) {
-      const { enabled } = await res.json();
+      const { enabled, whatsapp } = await res.json();
+      setWhatsappStatus(whatsapp);
       setTeacher((prev) => (prev ? { ...prev, user: { ...prev.user, enabled } } : prev));
+    } else {
+      showToast("No se pudo actualizar el acceso. Probá de nuevo.");
     }
   }
 
@@ -91,6 +98,22 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
                 {togglingAccess ? "Guardando..." : teacher.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
               </Button>
             </div>
+            {whatsappStatus === "sent" && (
+              <p role="alert" className="mt-2 text-xs text-success-700">
+                Le llegó el WhatsApp de bienvenida.
+              </p>
+            )}
+            {whatsappStatus === "failed" && (
+              <p role="alert" className="mt-2 text-xs text-danger-700">
+                No se pudo enviar el WhatsApp (¿el gateway está online?). Avisale por otro medio para que entre a
+                /recuperar con su email, DNI y teléfono.
+              </p>
+            )}
+            {whatsappStatus === "skipped" && !teacher.phone && (
+              <p role="alert" className="mt-2 text-xs text-warning-700">
+                No tiene teléfono cargado: no se le pudo avisar por WhatsApp.
+              </p>
+            )}
           </DrawerSection>
 
           <DrawerSection title="Aulas a cargo">

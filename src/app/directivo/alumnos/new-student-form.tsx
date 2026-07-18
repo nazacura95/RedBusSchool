@@ -86,7 +86,7 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
           <Label htmlFor="birthDate">Fecha de nacimiento</Label>
           <Input id="birthDate" type="date" value={form.birthDate} onChange={(e) => set("birthDate", e.target.value)} />
         </div>
-        {error && <p className="text-sm text-danger-700">{error}</p>}
+        {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancelar

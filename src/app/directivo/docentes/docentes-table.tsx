@@ -73,7 +73,12 @@ export function DocentesTable({ initialTeachers }: { initialTeachers: TeacherLis
                   <div className="flex items-center gap-3">
                     <Avatar name={t.user.name} />
                     <div>
-                      <div className="font-medium text-neutral-900">{t.user.name}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-neutral-900">{t.user.name}</span>
+                        {(!t.dni || !t.phone) && (
+                          <Badge tone="warning">Legajo incompleto</Badge>
+                        )}
+                      </div>
                       {t.dni && <div className="text-xs text-neutral-400">{t.dni}</div>}
                     </div>
                   </div>

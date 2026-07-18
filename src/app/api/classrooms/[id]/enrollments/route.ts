@@ -1,12 +1,10 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const { id: classroomId } = await params;
   const { studentId, status } = await req.json();
@@ -23,10 +21,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const { id: classroomId } = await params;
   const { enrollmentId, status } = await req.json();
@@ -37,6 +33,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const enrollment = await prisma.enrollment.update({
     where: { id: enrollmentId, classroomId },
     data: { status },
+    include: { classroom: true },
   });
+
+  // al cerrar un nivel se emite el certificado solo, sin que el directivo tenga que acordarse.
+  if (status === "FINALIZADA") {
+    await prisma.certificate.create({
+      data: {
+        studentId: enrollment.studentId,
+        title: `Certificado ${enrollment.classroom.level} completo`,
+      },
+    });
+  }
+
   return NextResponse.json(enrollment);
 }

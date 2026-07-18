@@ -1,12 +1,10 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("ALUMNO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { session, response } = await requireRole("ALUMNO");
+  if (response) return response;
 
   const { id: assignmentId } = await params;
 

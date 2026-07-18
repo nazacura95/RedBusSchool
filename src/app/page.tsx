@@ -282,6 +282,7 @@ export default async function Home() {
               <p>hola@redbusschool.com</p>
             </div>
             <iframe
+              title="Mapa de ubicación de Redbus School of English"
               src={`https://www.google.com/maps?q=${encodeURIComponent(
                 "Redbus School of English, Av. Croacia 2499-2569, B1666KDM José C. Paz, Buenos Aires, Argentina"
               )}&output=embed`}

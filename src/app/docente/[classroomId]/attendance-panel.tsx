@@ -5,6 +5,7 @@ import { Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 
 type Student = { enrollmentId: string; name: string };
 
@@ -18,6 +19,9 @@ export function AttendancePanel({ classroomId, students }: { classroomId: string
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { showToast } = useToast();
+
+  const unmarkedCount = students.filter((s) => attendance[s.enrollmentId] === undefined).length;
 
   useEffect(() => {
     fetch(`/api/classrooms/${classroomId}/attendance?date=${date}`)
@@ -42,7 +46,11 @@ export function AttendancePanel({ classroomId, students }: { classroomId: string
       body: JSON.stringify({ date, records }),
     });
     setSaving(false);
-    if (res.ok) setSaved(true);
+    if (res.ok) {
+      setSaved(true);
+    } else {
+      showToast("No se pudo guardar la asistencia. Probá de nuevo.");
+    }
   }
 
   return (
@@ -109,11 +117,20 @@ export function AttendancePanel({ classroomId, students }: { classroomId: string
             })}
           </div>
 
+          {unmarkedCount > 0 && (
+            <p role="alert" className="mt-3 text-sm text-warning-700">
+              Faltan marcar {unmarkedCount} alumno{unmarkedCount > 1 ? "s" : ""}.
+            </p>
+          )}
           <div className="mt-4 flex items-center gap-3">
             <Button onClick={handleSave} disabled={saving}>
               {saving ? "Guardando..." : "Guardar asistencia"}
             </Button>
-            {saved && <span className="text-sm text-success-700">Guardado.</span>}
+            {saved && (
+              <span role="alert" className="text-sm text-success-700">
+                {unmarkedCount > 0 ? `Guardado (faltaron ${unmarkedCount}).` : "Guardado."}
+              </span>
+            )}
           </div>
         </>
       )}

@@ -7,6 +7,7 @@ import { Badge, EnrollmentStatusBadge, PaymentStatusBadge } from "@/components/u
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 
 type Contact = { id: string; name: string; relationship: string; phone: string; email: string | null };
 
@@ -52,6 +53,8 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
   const [savingPayment, setSavingPayment] = useState(false);
   const [saving, setSaving] = useState(false);
   const [togglingAccess, setTogglingAccess] = useState(false);
+  const [whatsappStatus, setWhatsappStatus] = useState<"sent" | "failed" | "skipped" | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetch(`/api/students/${studentId}`)
@@ -64,6 +67,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
   async function handleToggleAccess() {
     if (!student) return;
     setTogglingAccess(true);
+    setWhatsappStatus(null);
     const res = await fetch(`/api/students/${studentId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -71,8 +75,11 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
     });
     setTogglingAccess(false);
     if (res.ok) {
-      const { enabled } = await res.json();
+      const { enabled, whatsapp } = await res.json();
+      setWhatsappStatus(whatsapp);
       setStudent((prev) => (prev ? { ...prev, user: { ...prev.user, enabled } } : prev));
+    } else {
+      showToast("No se pudo actualizar el acceso. Probá de nuevo.");
     }
   }
 
@@ -90,6 +97,8 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
       setStudent((prev) => (prev ? { ...prev, contacts: [...prev.contacts, contact] } : prev));
       setContactForm({ name: "", relationship: "Madre", phone: "", email: "" });
       setShowContactForm(false);
+    } else {
+      showToast("No se pudo guardar el contacto. Probá de nuevo.");
     }
   }
 
@@ -107,6 +116,8 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
       setStudent((prev) => (prev ? { ...prev, payments: [payment, ...prev.payments] } : prev));
       setPaymentForm({ period: "", amount: "", method: "Efectivo", paid: true });
       setShowPaymentForm(false);
+    } else {
+      showToast("No se pudo registrar el pago. Probá de nuevo.");
     }
   }
 
@@ -118,6 +129,8 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
     });
     if (res.ok) {
       setStudent((prev) => (prev ? { ...prev, contacts: prev.contacts.filter((c) => c.id !== contactId) } : prev));
+    } else {
+      showToast("No se pudo eliminar el contacto. Probá de nuevo.");
     }
   }
 
@@ -161,6 +174,22 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
                 {togglingAccess ? "Guardando..." : student.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
               </Button>
             </div>
+            {whatsappStatus === "sent" && (
+              <p role="alert" className="mt-2 text-xs text-success-700">
+                Le llegó el WhatsApp de bienvenida.
+              </p>
+            )}
+            {whatsappStatus === "failed" && (
+              <p role="alert" className="mt-2 text-xs text-danger-700">
+                No se pudo enviar el WhatsApp (¿el gateway está online?). Avisale por otro medio para que entre a
+                /recuperar con su email, DNI y teléfono.
+              </p>
+            )}
+            {whatsappStatus === "skipped" && !student.phone && (
+              <p role="alert" className="mt-2 text-xs text-warning-700">
+                No tiene teléfono cargado: no se le pudo avisar por WhatsApp.
+              </p>
+            )}
           </DrawerSection>
 
           <DrawerSection title="Contactos de emergencia">

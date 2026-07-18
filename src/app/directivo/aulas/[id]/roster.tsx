@@ -163,7 +163,7 @@ function EnrollForm({
         onChange={(e) => setQuery(e.target.value)}
         autoFocus
       />
-      {error && <p className="text-sm text-danger-700">{error}</p>}
+      {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
       <ul className="space-y-1">
         {available.map((s) => (
           <li key={s.id}>

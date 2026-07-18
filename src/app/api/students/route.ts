@@ -1,14 +1,11 @@
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
-import { auth } from "@/lib/auth";
 import { prisma, PUBLIC_USER_SELECT } from "@/lib/prisma";
+import { requireRole } from "@/lib/require-role";
+import { generatePendingPasswordHash } from "@/lib/pending-account";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const students = await prisma.studentProfile.findMany({
     include: {
@@ -23,18 +20,15 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const { name, email, dni, phone, address, birthDate } = await req.json();
   if (!name || !email || !dni || !phone) {
     return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
   }
 
-  // nadie conoce esta contraseña: el alumno elige la suya en /recuperar una vez habilitado.
-  const passwordHash = await bcrypt.hash(crypto.randomUUID(), 10);
+  const passwordHash = await generatePendingPasswordHash();
 
   try {
     const student = await prisma.studentProfile.create({

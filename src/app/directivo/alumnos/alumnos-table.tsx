@@ -109,7 +109,12 @@ export function AlumnosTable({
                   <div className="flex items-center gap-3">
                     <Avatar name={s.user.name} />
                     <div>
-                      <div className="font-medium text-neutral-900">{s.user.name}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-neutral-900">{s.user.name}</span>
+                        {(!s.dni || !s.phone) && (
+                          <Badge tone="warning">Legajo incompleto</Badge>
+                        )}
+                      </div>
                       <div className="text-xs text-neutral-400">{s.dni ?? "—"}</div>
                     </div>
                   </div>

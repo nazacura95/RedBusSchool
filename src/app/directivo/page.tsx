@@ -5,13 +5,14 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { Card } from "@/components/ui/card";
 import { Users, Briefcase, BookOpen, AlertTriangle } from "lucide-react";
 import { AlumnosPorNivelChart, EstadoPagosChart } from "./charts";
+import { findAtRiskStudents } from "@/lib/at-risk";
 
 export default async function DirectivoDashboard() {
   const session = await auth();
 
   const currentPeriod = new Date().toISOString().slice(0, 7); // "YYYY-MM"
 
-  const [totalAlumnos, totalDocentes, totalAulas, pagosPendientes, aulas, pagos] = await Promise.all([
+  const [totalAlumnos, totalDocentes, totalAulas, pagosPendientes, aulas, pagos, atRisk] = await Promise.all([
     prisma.studentProfile.count(),
     prisma.teacherProfile.count(),
     prisma.classroom.count(),
@@ -24,6 +25,7 @@ export default async function DirectivoDashboard() {
       where: { period: currentPeriod },
       _count: { _all: true },
     }),
+    findAtRiskStudents(),
   ]);
 
   const porNivel = new Map<string, number>();
@@ -58,6 +60,28 @@ export default async function DirectivoDashboard() {
           <EstadoPagosChart data={estadoPagos} />
         </Card>
       </div>
+
+      <Card>
+        <h3 className="font-semibold text-neutral-900">Alumnos en riesgo de abandono</h3>
+        <p className="mt-1 text-sm text-neutral-500">
+          Cuota vencida y/o 2 o más ausencias seguidas en alguna de sus aulas activas.
+        </p>
+        {atRisk.length === 0 ? (
+          <p className="mt-4 text-sm text-neutral-500">Ningún alumno activo muestra señales de riesgo ahora mismo.</p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {atRisk.map((s) => (
+              <li
+                key={s.studentId}
+                className="flex items-center justify-between rounded-lg border border-neutral-200 px-4 py-2.5 text-sm"
+              >
+                <span className="font-medium text-neutral-900">{s.name}</span>
+                <span className="text-warning-700">{s.reasons.join(" · ")}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </AppShell>
   );
 }

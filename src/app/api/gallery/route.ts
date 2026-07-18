@@ -1,13 +1,11 @@
 import { put, del } from "@vercel/blob";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const form = await req.formData();
   const file = form.get("file") as File | null;
@@ -21,10 +19,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const { id } = await req.json();
   const image = await prisma.siteImage.delete({ where: { id } });

@@ -5,6 +5,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { Avatar } from "./ui/avatar";
 import { LogoutButton } from "./logout-button";
+import { ToastProvider } from "./ui/toast";
 
 type Role = "ALUMNO" | "DOCENTE" | "DIRECTIVO";
 
@@ -23,6 +24,7 @@ export function AppShell({
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-neutral-50">
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block">
@@ -93,5 +95,6 @@ export function AppShell({
         <main className="mx-auto max-w-7xl space-y-8 px-6 py-8 lg:px-8">{children}</main>
       </div>
     </div>
+    </ToastProvider>
   );
 }

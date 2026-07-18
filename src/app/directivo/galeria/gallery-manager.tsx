@@ -84,7 +84,7 @@ export function GalleryManager({ initialImages }: { initialImages: SiteImage[] }
           {uploading ? "Subiendo..." : "Subir"}
         </Button>
       </form>
-      {error && <p className="text-sm text-danger-700">{error}</p>}
+      {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
 
       {images.length === 0 ? (
         <div className="flex items-center gap-4 rounded-lg border border-neutral-200 bg-white p-8">

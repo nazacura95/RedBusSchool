@@ -85,7 +85,7 @@ export function NewTeacherForm({
             onChange={(e) => setHourlyRate(e.target.value)}
           />
         </div>
-        {error && <p className="text-sm text-danger-700">{error}</p>}
+        {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar

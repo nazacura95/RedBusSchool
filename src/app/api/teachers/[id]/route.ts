@@ -1,13 +1,11 @@
-import { auth } from "@/lib/auth";
 import { prisma, PUBLIC_USER_SELECT } from "@/lib/prisma";
-import { sendWelcomeWhatsApp } from "@/lib/password-reset";
+import { requireRole } from "@/lib/require-role";
+import { toggleAccountEnabled } from "@/lib/pending-account";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const { id } = await params;
   const teacher = await prisma.teacherProfile.findUnique({
@@ -42,10 +40,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DIRECTIVO")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { response } = await requireRole("DIRECTIVO");
+  if (response) return response;
 
   const { id } = await params;
   const { enabled } = await req.json();
@@ -53,16 +49,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   }
 
-  const teacher = await prisma.teacherProfile.findUnique({ where: { id }, include: { user: true } });
-  if (!teacher) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  const result = await toggleAccountEnabled(
+    () => prisma.teacherProfile.findUnique({ where: { id }, include: { user: true } }),
+    enabled,
+  );
+  if (!result) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  const user = await prisma.user.update({ where: { id: teacher.userId }, data: { enabled } });
-
-  if (enabled && !teacher.user.enabled && teacher.phone) {
-    sendWelcomeWhatsApp(user.name, user.email, teacher.phone).catch((err) =>
-      console.error("No se pudo enviar bienvenida por WhatsApp", err),
-    );
-  }
-
-  return NextResponse.json({ enabled: user.enabled });
+  return NextResponse.json(result);
 }

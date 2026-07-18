@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { Input, Label } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { RolePicker } from "./role-picker";
 
 async function login(formData: FormData) {
   "use server";
@@ -53,10 +52,8 @@ export default async function LoginPage({
           </div>
           <h2 className="mt-4 text-center text-xl font-semibold text-neutral-800">Ingresá a tu cuenta</h2>
 
-          <RolePicker />
-
           {error && (
-            <div className="mt-4 rounded-lg bg-danger-50 px-3.5 py-2.5 text-sm text-danger-700">
+            <div role="alert" className="mt-4 rounded-lg bg-danger-50 px-3.5 py-2.5 text-sm text-danger-700">
               Email o contraseña incorrectos.
             </div>
           )}

@@ -47,6 +47,7 @@ export default auth((req) => {
 
 export const config = {
   // excluye rutas de API, assets internos de Next y cualquier archivo estático de /public
-  // (logo, favicon, etc.) — antes solo excluía favicon.ico y esto redirigía /brand/*.png a /login.
-  matcher: ["/((?!api|_next/static|_next/image|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)"],
+  // (logo, favicon, manifest, service worker, etc.) — un archivo de /public nuevo que no
+  // matchee esta lista queda igual de "invisible" (redirige a /login) que le pasó al logo.
+  matcher: ["/((?!api|_next/static|_next/image|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|json|js)$).*)"],
 };

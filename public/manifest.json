@@ -1,0 +1,13 @@
+{
+  "name": "Redbus School of English",
+  "short_name": "Redbus School",
+  "description": "Plataforma de gestión de Redbus School of English",
+  "start_url": "/login",
+  "display": "standalone",
+  "background_color": "#fbf7ef",
+  "theme_color": "#c8102e",
+  "icons": [
+    { "src": "/brand/logo-256.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "/brand/logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

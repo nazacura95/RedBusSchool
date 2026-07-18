@@ -1,10 +1,11 @@
-import { BookOpen, Wallet, Award } from "lucide-react";
+import { BookOpen, Wallet, Award, Check } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { PaymentStatusBadge, EnrollmentStatusBadge } from "@/components/ui/badge";
+import { nextClassDate, formatNextClass } from "@/lib/schedule";
 import { TareasSection } from "./tareas-section";
 
 export default async function AlumnoDashboard() {
@@ -57,6 +58,7 @@ export default async function AlumnoDashboard() {
                 <Th>Aula</Th>
                 <Th>Nivel</Th>
                 <Th>Docente</Th>
+                <Th>Próxima clase</Th>
                 <Th>Estado</Th>
               </Tr>
             </Thead>
@@ -66,6 +68,7 @@ export default async function AlumnoDashboard() {
                   <Td className="font-medium text-neutral-900">{e.classroom.name}</Td>
                   <Td>{e.classroom.level}</Td>
                   <Td>{e.classroom.teacher.user.name}</Td>
+                  <Td>{formatNextClass(nextClassDate(e.classroom.dayOfWeek, e.classroom.startTime))}</Td>
                   <Td>
                     <EnrollmentStatusBadge status={e.status} />
                   </Td>
@@ -75,6 +78,38 @@ export default async function AlumnoDashboard() {
           </Table>
         )}
       </Card>
+
+      {profile && profile.enrollments.length > 0 && (
+        <Card>
+          <h3 className="mb-4 font-semibold text-neutral-900">Tu progreso</h3>
+          <ol className="space-y-4">
+            {[...profile.enrollments]
+              .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+              .map((e) => (
+                <li key={e.id} className="flex items-start gap-3">
+                  <span
+                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                      e.status === "FINALIZADA"
+                        ? "bg-success-500 text-white"
+                        : e.status === "ACTIVA"
+                          ? "bg-primary-500 text-white"
+                          : "bg-neutral-200 text-neutral-500"
+                    }`}
+                  >
+                    {e.status === "FINALIZADA" ? <Check className="h-3.5 w-3.5" /> : null}
+                  </span>
+                  <div>
+                    <p className="font-medium text-neutral-900">{e.classroom.level}</p>
+                    <p className="text-xs text-neutral-500">
+                      {e.status === "FINALIZADA" ? "Completado" : e.status === "ACTIVA" ? "En curso" : "Pausado"} ·{" "}
+                      {e.classroom.name}
+                    </p>
+                  </div>
+                </li>
+              ))}
+          </ol>
+        </Card>
+      )}
 
       <Card>
         <h3 className="mb-4 font-semibold text-neutral-900">Últimos pagos</h3>

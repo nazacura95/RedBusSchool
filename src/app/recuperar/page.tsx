@@ -59,7 +59,7 @@ export default function RecuperarPage() {
           </p>
 
           {error && (
-            <div className="mt-4 rounded-lg bg-danger-50 px-3.5 py-2.5 text-sm text-danger-700">{error}</div>
+            <div role="alert" className="mt-4 rounded-lg bg-danger-50 px-3.5 py-2.5 text-sm text-danger-700">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">

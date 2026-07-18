@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 
 async function assertOwner(classroomId: string, userId: string) {
@@ -11,10 +11,8 @@ async function assertOwner(classroomId: string, userId: string) {
 }
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DOCENTE")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { session, response } = await requireRole("DOCENTE");
+  if (response) return response;
 
   const { id } = await params;
   if (!(await assertOwner(id, session.user.id))) {
@@ -31,10 +29,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user.roles.includes("DOCENTE")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-  }
+  const { session, response } = await requireRole("DOCENTE");
+  if (response) return response;
 
   const { id } = await params;
   if (!(await assertOwner(id, session.user.id))) {

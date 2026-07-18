@@ -138,7 +138,7 @@ export function TareasSection({ initialAssignments }: { initialAssignments: Assi
                     </Button>
                   </div>
                 )}
-                {openId === a.id && error && <p className="mt-2 text-sm text-danger-700">{error}</p>}
+                {openId === a.id && error && <p role="alert" className="mt-2 text-sm text-danger-700">{error}</p>}
               </div>
             );
           })}

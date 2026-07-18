@@ -104,7 +104,7 @@ export function AssignmentsPanel({
           {saving ? "Creando..." : "Crear tarea"}
         </Button>
       </form>
-      {error && <p className="mt-2 text-sm text-danger-700">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-danger-700">{error}</p>}
 
       <div className="mt-6 space-y-2">
         {assignments.length === 0 && (
