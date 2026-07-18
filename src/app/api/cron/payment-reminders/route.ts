@@ -13,6 +13,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
+  // primero pasa a VENCIDO cualquier cuota PENDIENTE cuyo vencimiento ya pasó, para que el
+  // directivo no tenga que acordarse de cambiarlo a mano ni el resto del sistema (paneles,
+  // reportes, este mismo cron) dependa de un estado desactualizado.
+  await prisma.payment.updateMany({
+    where: { status: "PENDIENTE", dueDate: { lt: new Date() } },
+    data: { status: "VENCIDO" },
+  });
+
   const cutoff = new Date(Date.now() - REMIND_EVERY_MS);
   const overdue = await prisma.payment.findMany({
     where: {

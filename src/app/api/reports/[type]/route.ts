@@ -107,5 +107,24 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
     return csvResponse(csv, "aulas.csv");
   }
 
+  if (type === "gastos") {
+    const expenses = await prisma.expense.findMany({ orderBy: { date: "desc" } });
+    const csv = toCsv(
+      expenses.map((e) => ({
+        fecha: e.date.toISOString().slice(0, 10),
+        categoria: e.category,
+        descripcion: e.description ?? "",
+        monto: e.amount.toString(),
+      })),
+      [
+        { key: "fecha", header: "Fecha" },
+        { key: "categoria", header: "Categoría" },
+        { key: "descripcion", header: "Descripción" },
+        { key: "monto", header: "Monto" },
+      ]
+    );
+    return csvResponse(csv, "gastos.csv");
+  }
+
   return NextResponse.json({ error: "Tipo de reporte inválido" }, { status: 400 });
 }

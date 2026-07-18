@@ -7,7 +7,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (response) return response;
 
   const { id: studentId } = await params;
-  const { period, amount, method, paid } = await req.json();
+  const { period, amount, method, paid, dueDate } = await req.json();
   if (!period || !amount) {
     return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
   }
@@ -20,6 +20,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       method: method || null,
       status: paid ? "PAGADO" : "PENDIENTE",
       paidAt: paid ? new Date() : null,
+      dueDate: dueDate ? new Date(dueDate) : null,
     },
   });
 

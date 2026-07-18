@@ -47,3 +47,25 @@ export function EstadoPagosChart({ data }: { data: { status: string; cantidad: n
     </ResponsiveContainer>
   );
 }
+
+const currencyFmt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+
+export function PagosHistoricoChart({
+  data,
+}: {
+  data: { period: string; pagado: number; pendiente: number; vencido: number }[];
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4dcc8" />
+        <XAxis dataKey="period" tick={{ fontSize: 12 }} />
+        <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => currencyFmt.format(v)} width={90} />
+        <Tooltip formatter={(value) => currencyFmt.format(Number(value))} />
+        <Bar dataKey="pagado" stackId="a" fill={PAGO_COLORS.PAGADO} name="Pagado" />
+        <Bar dataKey="pendiente" stackId="a" fill={PAGO_COLORS.PENDIENTE} name="Pendiente" />
+        <Bar dataKey="vencido" stackId="a" fill={PAGO_COLORS.VENCIDO} radius={[4, 4, 0, 0]} name="Vencido" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}

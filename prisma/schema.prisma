@@ -261,6 +261,7 @@ model Payment {
   method        String?       // efectivo, transferencia, mercadopago...
   mpPaymentId   String?       // id de pago en Mercado Pago, cuando aplique
   notes         String?
+  dueDate       DateTime?     // vencimiento; el cron de recordatorios pasa a VENCIDO cuando pasa
   remindedAt    DateTime?     // último recordatorio de pago vencido enviado por WhatsApp
   createdAt     DateTime      @default(now())
 
@@ -283,6 +284,19 @@ model PayrollItem {
 
   @@unique([teacherId, period])
   @@map("payroll_items")
+}
+
+// Gasto operativo del instituto (alquiler, servicios, insumos, eventos, etc).
+model Expense {
+  id          String   @id @default(cuid())
+  category    String   // "Alquiler", "Luz", "Gas", "Agua", "Wifi", "Mobiliario", "Eventos", "Otro"...
+  description String?
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime @db.Date
+  createdAt   DateTime @default(now())
+
+  @@index([date])
+  @@map("expenses")
 }
 
 // Persona interesada en inscribirse que dejó sus datos en la landing pública.

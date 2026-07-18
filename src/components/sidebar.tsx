@@ -3,13 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { GraduationCap, BookOpen, LayoutDashboard, BarChart3, Camera, Users, School, UserPlus, LucideIcon } from "lucide-react";
+import { GraduationCap, BookOpen, LayoutDashboard, BarChart3, Camera, Users, School, UserPlus, Wallet, Receipt, LucideIcon } from "lucide-react";
 
 const directivoExtras = [
   { label: "Alumnos", href: "/directivo/alumnos", icon: Users },
   { label: "Admisiones", href: "/directivo/admisiones", icon: UserPlus },
   { label: "Docentes", href: "/directivo/docentes", icon: GraduationCap },
   { label: "Aulas", href: "/directivo/aulas", icon: School },
+  { label: "Pagos", href: "/directivo/pagos", icon: Wallet },
+  { label: "Gastos", href: "/directivo/gastos", icon: Receipt },
   { label: "Galería", href: "/directivo/galeria", icon: Camera },
   { label: "Reportes", href: "/directivo/reportes", icon: BarChart3 },
 ];

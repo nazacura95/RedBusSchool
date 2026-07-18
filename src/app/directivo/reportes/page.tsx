@@ -8,6 +8,7 @@ const REPORTS = [
   { type: "pagos", label: "Pagos", description: "Historial de cuotas: período, monto, estado y método." },
   { type: "docentes", label: "Docentes", description: "Nombre, email, teléfono, tarifa por hora y aulas a cargo." },
   { type: "aulas", label: "Aulas", description: "Aula, nivel, docente y cantidad de alumnos inscriptos." },
+  { type: "gastos", label: "Gastos", description: "Fecha, categoría, descripción y monto de cada gasto." },
 ];
 
 export default async function ReportesPage() {
