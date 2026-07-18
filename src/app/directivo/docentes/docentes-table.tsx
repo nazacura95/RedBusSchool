@@ -42,7 +42,7 @@ export function DocentesTable({ initialTeachers }: { initialTeachers: TeacherLis
         <div className="w-full max-w-sm relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
           <Input
-            placeholder="Buscar por nombre o DNI..."
+            placeholder="Buscar por nombre o DNI…"
             className="pl-9"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -84,7 +84,7 @@ export function DocentesTable({ initialTeachers }: { initialTeachers: TeacherLis
                   </div>
                 </Td>
                 <Td>{t.phone ?? "—"}</Td>
-                <Td>{t.hourlyRate != null ? currency.format(t.hourlyRate) : "—"}</Td>
+                <Td className="tabular-nums">{t.hourlyRate != null ? currency.format(t.hourlyRate) : "—"}</Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
                     {visibleClassrooms.map((c) => (

@@ -37,6 +37,7 @@ export function GalleryManager({ initialImages }: { initialImages: SiteImage[] }
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("¿Eliminar esta foto de la galería?")) return;
     const res = await fetch("/api/gallery", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -81,7 +82,7 @@ export function GalleryManager({ initialImages }: { initialImages: SiteImage[] }
           />
         </div>
         <Button type="submit" variant="primary" disabled={!file || uploading}>
-          {uploading ? "Subiendo..." : "Subir"}
+          {uploading ? "Subiendo…" : "Subir"}
         </Button>
       </form>
       {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}

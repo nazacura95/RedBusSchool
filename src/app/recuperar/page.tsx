@@ -93,7 +93,7 @@ export default function RecuperarPage() {
               />
             </div>
             <Button type="submit" variant="primary" size="lg" className="w-full" disabled={saving}>
-              {saving ? "Guardando..." : "Guardar contraseña"}
+              {saving ? "Guardando…" : "Guardar contraseña"}
             </Button>
           </form>
         </div>

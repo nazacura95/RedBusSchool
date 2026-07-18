@@ -101,7 +101,7 @@ export function AssignmentsPanel({
           />
         </div>
         <Button type="submit" disabled={!title.trim() || saving}>
-          {saving ? "Creando..." : "Crear tarea"}
+          {saving ? "Creando…" : "Crear tarea"}
         </Button>
       </form>
       {error && <p role="alert" className="mt-2 text-sm text-danger-700">{error}</p>}

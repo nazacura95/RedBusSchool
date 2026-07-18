@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AppShell } from "@/components/app-shell";
 import { StatTile } from "@/components/ui/stat-tile";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Users, Briefcase, BookOpen, AlertTriangle } from "lucide-react";
 import { AlumnosPorNivelChart, EstadoPagosChart } from "./charts";
 import { findAtRiskStudents } from "@/lib/at-risk";
@@ -76,7 +77,7 @@ export default async function DirectivoDashboard() {
                 className="flex items-center justify-between rounded-lg border border-neutral-200 px-4 py-2.5 text-sm"
               >
                 <span className="font-medium text-neutral-900">{s.name}</span>
-                <span className="text-warning-700">{s.reasons.join(" · ")}</span>
+                <Badge tone={s.reasons.length > 1 ? "danger" : "warning"}>{s.reasons.join(" · ")}</Badge>
               </li>
             ))}
           </ul>

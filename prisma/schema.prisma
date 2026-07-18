@@ -354,3 +354,14 @@ model SiteImage {
 
   @@map("site_images")
 }
+
+// Testimonio real de un padre/alumno, cargado a mano por el directivo — nunca texto inventado.
+model Testimonial {
+  id        String   @id @default(cuid())
+  quote     String
+  author    String   // ej "Mamá de Sofía, Nivel 2"
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("testimonials")
+}

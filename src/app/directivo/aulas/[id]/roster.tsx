@@ -158,7 +158,7 @@ function EnrollForm({
   return (
     <Drawer open onClose={onClose} title="Inscribir alumno">
       <Input
-        placeholder="Buscar por nombre o DNI..."
+        placeholder="Buscar por nombre o DNI…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         autoFocus

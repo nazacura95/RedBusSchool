@@ -45,6 +45,7 @@ export function MaterialsPanel({
   }
 
   async function handleDelete(materialId: string) {
+    if (!confirm("¿Eliminar este material?")) return;
     const res = await fetch(`/api/classrooms/${classroomId}/materials`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -77,7 +78,7 @@ export function MaterialsPanel({
           />
         </div>
         <Button type="submit" disabled={!file || !title.trim() || uploading}>
-          {uploading ? "Subiendo..." : "Subir material"}
+          {uploading ? "Subiendo…" : "Subir material"}
         </Button>
       </form>
       {error && <p role="alert" className="mt-2 text-sm text-danger-700">{error}</p>}

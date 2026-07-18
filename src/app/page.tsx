@@ -15,6 +15,7 @@ import {
   Baby,
   TrendingUp,
   Award,
+  GraduationCap,
   LucideIcon,
 } from "lucide-react";
 import { LandingNav } from "@/components/landing-nav";
@@ -50,10 +51,11 @@ const gallerySpans = [
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [alumnos, docentes, images] = await Promise.all([
+  const [alumnos, docentes, images, testimonials] = await Promise.all([
     prisma.studentProfile.count(),
     prisma.teacherProfile.count(),
     prisma.siteImage.findMany({ orderBy: { order: "asc" } }),
+    prisma.testimonial.findMany({ orderBy: { order: "asc" } }),
   ]);
 
   const gallery =
@@ -141,8 +143,9 @@ export default async function Home() {
               alt="Profesora dando clase de inglés a un grupo de alumnos"
               className="aspect-[4/3] w-full rounded-[20px] object-cover shadow-lg"
             />
-            <div className="absolute inset-x-4 bottom-4 rounded-lg bg-accent-500/90 px-4 py-3 text-sm font-medium text-white backdrop-blur">
-              🎓 Raíces británicas · Colectivo de dos pisos, nuestro sello
+            <div className="absolute inset-x-4 bottom-4 flex items-center gap-2 rounded-lg bg-accent-500/90 px-4 py-3 text-sm font-medium text-white backdrop-blur">
+              <GraduationCap className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Raíces británicas · Colectivo de dos pisos, nuestro sello
             </div>
           </div>
           <div>
@@ -247,6 +250,26 @@ export default async function Home() {
           </p>
         )}
       </section>
+
+      {/* Testimonios */}
+      {testimonials.length > 0 && (
+        <section className="bg-neutral-100 py-16">
+          <div className="mx-auto max-w-6xl px-4">
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary-500">Lo que dicen</p>
+            <h2 className="mt-2 text-2xl font-semibold text-neutral-800 md:text-3xl">
+              Familias que ya nos conocen
+            </h2>
+            <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+              {testimonials.map((t) => (
+                <div key={t.id} className="rounded-[20px] bg-white p-6 shadow-sm">
+                  <p className="font-serif text-lg italic leading-snug text-neutral-800">&ldquo;{t.quote}&rdquo;</p>
+                  <p className="mt-4 text-sm font-semibold text-primary-500">{t.author}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Contacto */}
       <section id="contacto" className="bg-neutral-100 py-16">

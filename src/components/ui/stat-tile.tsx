@@ -28,9 +28,11 @@ export function StatTile({
       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${toneClasses[tone]}`}>
         <Icon className="h-5 w-5" />
       </span>
-      <div>
-        <p className="text-sm text-neutral-600">{label}</p>
-        <p className="text-3xl font-bold text-neutral-900">{value}</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm text-neutral-600">{label}</p>
+        <p className="truncate text-2xl font-bold text-neutral-900 [font-variant-numeric:tabular-nums]" title={String(value)}>
+          {value}
+        </p>
       </div>
     </Card>
   );

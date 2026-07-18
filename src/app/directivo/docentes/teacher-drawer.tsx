@@ -64,7 +64,7 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
   }
 
   return (
-    <Drawer open onClose={onClose} title={teacher?.user.name ?? "Cargando..."} subtitle="Legajo del docente">
+    <Drawer open onClose={onClose} title={teacher?.user.name ?? "Cargando…"} subtitle="Legajo del docente">
       {!teacher ? (
         <p className="text-sm text-neutral-500">Cargando...</p>
       ) : (
@@ -95,7 +95,7 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
                 onClick={handleToggleAccess}
                 disabled={togglingAccess}
               >
-                {togglingAccess ? "Guardando..." : teacher.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
+                {togglingAccess ? "Guardando…" : teacher.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
               </Button>
             </div>
             {whatsappStatus === "sent" && (
@@ -140,7 +140,7 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
                   <Tr key={p.id}>
                     <Td>{p.period}</Td>
                     <Td>{p.hours}</Td>
-                    <Td>{currency.format(Number(p.amount))}</Td>
+                    <Td className="tabular-nums">{currency.format(Number(p.amount))}</Td>
                     <Td>{p.paid ? <Badge tone="success">Sí</Badge> : <Badge tone="warning">No</Badge>}</Td>
                   </Tr>
                 ))}

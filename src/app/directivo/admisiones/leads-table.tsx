@@ -133,7 +133,7 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             rows={4}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Notas de seguimiento..."
+            placeholder="Notas de seguimiento…"
           />
         </div>
         <Button variant="primary" onClick={handleSave} disabled={saving}>

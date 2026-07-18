@@ -119,11 +119,11 @@ export function TareasSection({ initialAssignments }: { initialAssignments: Assi
                       onChange={(e) => setDraft(e.target.value)}
                       rows={4}
                       className="w-full rounded-md border-[1.5px] border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
-                      placeholder="Escribí tu respuesta acá..."
+                      placeholder="Escribí tu respuesta acá…"
                     />
                     <div className="flex gap-2">
                       <Button type="submit" size="sm" disabled={!draft.trim() || saving}>
-                        {saving ? "Enviando..." : "Enviar"}
+                        {saving ? "Enviando…" : "Enviar"}
                       </Button>
                       <Button type="button" variant="secondary" size="sm" onClick={() => setOpenId(null)}>
                         Cancelar

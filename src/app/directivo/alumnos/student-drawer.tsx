@@ -122,6 +122,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
   }
 
   async function handleDeleteContact(contactId: string) {
+    if (!confirm("¿Eliminar este contacto de emergencia?")) return;
     const res = await fetch(`/api/students/${studentId}/contacts`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -171,7 +172,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
                 onClick={handleToggleAccess}
                 disabled={togglingAccess}
               >
-                {togglingAccess ? "Guardando..." : student.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
+                {togglingAccess ? "Guardando…" : student.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
               </Button>
             </div>
             {whatsappStatus === "sent" && (
@@ -298,7 +299,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
                 {student.payments.map((p) => (
                   <Tr key={p.id}>
                     <Td>{p.period}</Td>
-                    <Td>${Number(p.amount).toLocaleString("es-AR")}</Td>
+                    <Td className="tabular-nums">${Number(p.amount).toLocaleString("es-AR")}</Td>
                     <Td>
                       <PaymentStatusBadge status={p.status} />
                     </Td>

@@ -9,7 +9,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 
-const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
+const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 const selectClass =
   "w-full rounded-md border-[1.5px] border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30";
 
@@ -59,6 +59,7 @@ export function GastosView({
   useEffect(load, [period]);
 
   async function handleDelete(id: string) {
+    if (!confirm("¿Eliminar este gasto?")) return;
     const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
     if (res.ok) {
       setExpenses((prev) => prev.filter((e) => e.id !== id));
@@ -87,13 +88,22 @@ export function GastosView({
       {categoryBreakdown.length > 0 && (
         <Card>
           <h3 className="mb-3 font-semibold text-neutral-900">Por categoría ({currentPeriod})</h3>
-          <ul className="space-y-2">
-            {categoryBreakdown.map((c) => (
-              <li key={c.category} className="flex items-center justify-between text-sm">
-                <span className="text-neutral-700">{c.category}</span>
-                <span className="font-medium text-neutral-900">{currency.format(c.amount)}</span>
-              </li>
-            ))}
+          <ul className="space-y-3">
+            {categoryBreakdown.map((c) => {
+              const max = categoryBreakdown[0].amount || 1;
+              const pct = Math.round((c.amount / max) * 100);
+              return (
+                <li key={c.category}>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-700">{c.category}</span>
+                    <span className="font-medium text-neutral-900 tabular-nums">{currency.format(c.amount)}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-neutral-100">
+                    <div className="h-1.5 rounded-full bg-danger-500" style={{ width: `${pct}%` }} />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </Card>
       )}
@@ -129,7 +139,7 @@ export function GastosView({
                 <Td>{new Date(e.date).toLocaleDateString("es-AR", { timeZone: "UTC" })}</Td>
                 <Td className="font-medium text-neutral-900">{e.category}</Td>
                 <Td>{e.description ?? "—"}</Td>
-                <Td>{currency.format(Number(e.amount))}</Td>
+                <Td className="tabular-nums">{currency.format(Number(e.amount))}</Td>
                 <Td>
                   <button
                     onClick={() => handleDelete(e.id)}
@@ -240,7 +250,7 @@ function NewExpenseForm({ onClose, onCreated }: { onClose: () => void; onCreated
               Cancelar
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Guardando..." : "Guardar"}
+              {saving ? "Guardando…" : "Guardar"}
             </Button>
           </div>
         </form>

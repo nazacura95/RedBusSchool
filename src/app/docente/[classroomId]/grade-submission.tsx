@@ -110,7 +110,7 @@ function GradeForm({
       {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
 
       <Button onClick={handleSave} disabled={saving}>
-        {saving ? "Guardando..." : "Guardar corrección"}
+        {saving ? "Guardando…" : "Guardar corrección"}
       </Button>
     </>
   );

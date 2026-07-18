@@ -91,7 +91,7 @@ export function NewTeacherForm({
             Cancelar
           </Button>
           <Button type="submit" disabled={saving}>
-            {saving ? "Creando..." : "Crear docente"}
+            {saving ? "Creando…" : "Crear docente"}
           </Button>
         </div>
       </form>

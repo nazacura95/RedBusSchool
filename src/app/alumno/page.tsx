@@ -79,16 +79,35 @@ export default async function AlumnoDashboard() {
         )}
       </Card>
 
-      {profile && profile.enrollments.length > 0 && (
-        <Card>
-          <h3 className="mb-4 font-semibold text-neutral-900">Tu progreso</h3>
-          <ol className="space-y-4">
-            {[...profile.enrollments]
-              .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-              .map((e) => (
-                <li key={e.id} className="flex items-start gap-3">
+      {profile && profile.enrollments.length > 0 && (() => {
+        const sorted = [...profile.enrollments].sort(
+          (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+        );
+        const completedCount = sorted.filter((e) => e.status === "FINALIZADA").length;
+        const pct = Math.round((completedCount / sorted.length) * 100);
+        return (
+          <Card>
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="font-semibold text-neutral-900">Tu progreso</h3>
+              <span className="text-sm text-neutral-500">
+                {completedCount} de {sorted.length} niveles completados
+              </span>
+            </div>
+            <div className="mb-6 h-2 rounded-full bg-neutral-100">
+              <div className="h-2 rounded-full bg-success-500 transition-[width]" style={{ width: `${pct}%` }} />
+            </div>
+            <ol className="space-y-4">
+              {sorted.map((e, i) => (
+                <li key={e.id} className="relative flex items-start gap-3 pb-1">
+                  {i < sorted.length - 1 && (
+                    <span
+                      className={`absolute left-3 top-6 h-full w-0.5 -translate-x-1/2 ${
+                        e.status === "FINALIZADA" ? "bg-success-500" : "bg-neutral-200"
+                      }`}
+                    />
+                  )}
                   <span
-                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                    className={`relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
                       e.status === "FINALIZADA"
                         ? "bg-success-500 text-white"
                         : e.status === "ACTIVA"
@@ -107,9 +126,10 @@ export default async function AlumnoDashboard() {
                   </div>
                 </li>
               ))}
-          </ol>
-        </Card>
-      )}
+            </ol>
+          </Card>
+        );
+      })()}
 
       <Card>
         <h3 className="mb-4 font-semibold text-neutral-900">Últimos pagos</h3>
@@ -136,7 +156,7 @@ export default async function AlumnoDashboard() {
               {profile.payments.map((p) => (
                 <Tr key={p.id}>
                   <Td className="font-medium text-neutral-900">{p.period}</Td>
-                  <Td>${p.amount.toString()}</Td>
+                  <Td className="tabular-nums">${p.amount.toString()}</Td>
                   <Td>
                     <PaymentStatusBadge status={p.status} />
                   </Td>

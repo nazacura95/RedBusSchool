@@ -11,7 +11,7 @@ import { PaymentStatusBadge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 import { PagosHistoricoChart } from "../charts";
 
-const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
+const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 const selectClass =
   "w-full rounded-md border-[1.5px] border-neutral-200 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30";
 
@@ -107,7 +107,7 @@ export function PagosView({
             {payments.map((p) => (
               <Tr key={p.id}>
                 <Td className="font-medium text-neutral-900">{p.student.user.name}</Td>
-                <Td>{currency.format(Number(p.amount))}</Td>
+                <Td className="tabular-nums">{currency.format(Number(p.amount))}</Td>
                 <Td>
                   <PaymentStatusBadge status={p.status} />
                 </Td>
@@ -246,7 +246,7 @@ function NewPaymentForm({
               Cancelar
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Guardando..." : "Guardar"}
+              {saving ? "Guardando…" : "Guardar"}
             </Button>
           </div>
         </form>

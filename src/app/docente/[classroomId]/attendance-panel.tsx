@@ -124,7 +124,7 @@ export function AttendancePanel({ classroomId, students }: { classroomId: string
           )}
           <div className="mt-4 flex items-center gap-3">
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Guardando..." : "Guardar asistencia"}
+              {saving ? "Guardando…" : "Guardar asistencia"}
             </Button>
             {saved && (
               <span role="alert" className="text-sm text-success-700">

@@ -92,7 +92,7 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
             Cancelar
           </Button>
           <Button type="submit" disabled={saving}>
-            {saving ? "Creando..." : "Crear alumno"}
+            {saving ? "Creando…" : "Crear alumno"}
           </Button>
         </div>
       </form>

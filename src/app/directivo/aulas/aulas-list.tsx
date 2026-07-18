@@ -204,7 +204,7 @@ function NewAulaForm({
         </div>
         {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
         <Button type="submit" disabled={saving || !teacherId} className="w-full">
-          {saving ? "Creando..." : "Crear aula"}
+          {saving ? "Creando…" : "Crear aula"}
         </Button>
       </form>
     </Drawer>
