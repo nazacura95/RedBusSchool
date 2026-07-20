@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Trash2, ImagePlus, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 type SiteImage = { id: string; url: string; caption: string | null };
 
@@ -16,7 +17,7 @@ export function GalleryManager({ initialImages }: { initialImages: SiteImage[] }
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (!file) return;
+    if (uploading || !file) return;
     setUploading(true);
     setError(null);
     const form = new FormData();
@@ -81,7 +82,8 @@ export function GalleryManager({ initialImages }: { initialImages: SiteImage[] }
             placeholder="Ej: Clase de kids"
           />
         </div>
-        <Button type="submit" variant="primary" disabled={!file || uploading}>
+        <Button type="submit" variant="primary" disabled={!file}>
+          {uploading && <Spinner className="mr-2" />}
           {uploading ? "Subiendo…" : "Subir"}
         </Button>
       </form>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Drawer, DrawerSection } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 type SubmissionDetail = {
   id: string;
@@ -60,6 +61,7 @@ function GradeForm({
   const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
+    if (saving) return;
     setSaving(true);
     setError(null);
     const res = await fetch(`/api/submissions/${submission.id}`, {
@@ -109,7 +111,8 @@ function GradeForm({
 
       {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
 
-      <Button onClick={handleSave} disabled={saving}>
+      <Button onClick={handleSave}>
+        {saving && <Spinner className="mr-2" />}
         {saving ? "Guardando…" : "Guardar corrección"}
       </Button>
     </>

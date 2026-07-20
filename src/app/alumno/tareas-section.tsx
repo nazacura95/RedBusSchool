@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 
 type Submission = {
   content: string | null;
@@ -38,7 +39,7 @@ export function TareasSection({ initialAssignments }: { initialAssignments: Assi
 
   async function handleSubmit(e: React.FormEvent, assignmentId: string) {
     e.preventDefault();
-    if (!draft.trim()) return;
+    if (saving || !draft.trim()) return;
     setSaving(true);
     setError(null);
 
@@ -122,7 +123,8 @@ export function TareasSection({ initialAssignments }: { initialAssignments: Assi
                       placeholder="Escribí tu respuesta acá…"
                     />
                     <div className="flex gap-2">
-                      <Button type="submit" size="sm" disabled={!draft.trim() || saving}>
+                      <Button type="submit" size="sm" disabled={!draft.trim()}>
+                        {saving && <Spinner className="mr-2" />}
                         {saving ? "Enviando…" : "Enviar"}
                       </Button>
                       <Button type="button" variant="secondary" size="sm" onClick={() => setOpenId(null)}>

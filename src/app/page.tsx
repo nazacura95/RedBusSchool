@@ -19,6 +19,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import { LandingNav } from "@/components/landing-nav";
+import { CountUp } from "@/components/ui/count-up";
 import { LinkButton } from "@/components/ui/link-button";
 import { Card } from "@/components/ui/card";
 import { LeadForm } from "./lead-form";
@@ -93,18 +94,20 @@ export default async function Home() {
           <div className="mt-10 grid grid-cols-3 gap-3">
             <div>
               <p className="font-serif text-[30px] font-bold text-accent-500">
-                {alumnos > 0 ? `${alumnos}+` : "150+"}
+                <CountUp value={alumnos > 0 ? alumnos : 150} suffix="+" />
               </p>
               <p className="text-xs uppercase tracking-wide text-neutral-600">Alumnos</p>
             </div>
             <div>
               <p className="font-serif text-[30px] font-bold text-accent-500">
-                {docentes > 0 ? docentes : 7}
+                <CountUp value={docentes > 0 ? docentes : 7} />
               </p>
               <p className="text-xs uppercase tracking-wide text-neutral-600">Profesores</p>
             </div>
             <div>
-              <p className="font-serif text-[30px] font-bold text-accent-500">10+</p>
+              <p className="font-serif text-[30px] font-bold text-accent-500">
+                <CountUp value={10} suffix="+" />
+              </p>
               <p className="text-xs uppercase tracking-wide text-neutral-600">Años</p>
             </div>
           </div>

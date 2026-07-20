@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Drawer } from "@/components/ui/drawer";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 type FormState = {
   name: string;
@@ -27,6 +28,7 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError(null);
     const res = await fetch("/api/students", {
@@ -91,7 +93,8 @@ export function NewStudentForm({ onClose, onCreated }: { onClose: () => void; on
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button type="submit">
+            {saving && <Spinner className="mr-2" />}
             {saving ? "Creando…" : "Crear alumno"}
           </Button>
         </div>

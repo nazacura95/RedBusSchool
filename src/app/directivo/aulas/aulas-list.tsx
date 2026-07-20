@@ -8,6 +8,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { Drawer } from "@/components/ui/drawer";
+import { Spinner } from "@/components/ui/spinner";
 
 type ClassroomListItem = {
   id: string;
@@ -123,7 +124,7 @@ function NewAulaForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name || !level || !teacherId) return;
+    if (saving || !name || !level || !teacherId) return;
     setSaving(true);
     setError(null);
     const res = await fetch("/api/classrooms", {
@@ -203,7 +204,8 @@ function NewAulaForm({
           </div>
         </div>
         {error && <p role="alert" className="text-sm text-danger-700">{error}</p>}
-        <Button type="submit" disabled={saving || !teacherId} className="w-full">
+        <Button type="submit" disabled={!teacherId} className="w-full">
+          {saving && <Spinner className="mr-2" />}
           {saving ? "Creando…" : "Crear aula"}
         </Button>
       </form>

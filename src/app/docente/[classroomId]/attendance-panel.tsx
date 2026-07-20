@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
 
 type Student = { enrollmentId: string; name: string };
 
@@ -34,6 +35,7 @@ export function AttendancePanel({ classroomId, students }: { classroomId: string
   }, [classroomId, date]);
 
   async function handleSave() {
+    if (saving) return;
     setSaving(true);
     setSaved(false);
     const records = students
@@ -123,7 +125,8 @@ export function AttendancePanel({ classroomId, students }: { classroomId: string
             </p>
           )}
           <div className="mt-4 flex items-center gap-3">
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave}>
+              {saving && <Spinner className="mr-2" />}
               {saving ? "Guardando…" : "Guardar asistencia"}
             </Button>
             {saved && (

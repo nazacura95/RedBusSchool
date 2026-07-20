@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import { GradeSubmission } from "./grade-submission";
 
 type Submission = {
@@ -47,7 +48,7 @@ export function AssignmentsPanel({
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (saving || !title.trim()) return;
     setSaving(true);
     setError(null);
 
@@ -100,7 +101,8 @@ export function AssignmentsPanel({
             onChange={(e) => setDueDate(e.target.value)}
           />
         </div>
-        <Button type="submit" disabled={!title.trim() || saving}>
+        <Button type="submit" disabled={!title.trim()}>
+          {saving && <Spinner className="mr-2" />}
           {saving ? "Creando…" : "Crear tarea"}
         </Button>
       </form>

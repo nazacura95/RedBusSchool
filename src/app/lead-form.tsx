@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 const INTERESES = [
   "Kids (6-10 años)",
@@ -24,6 +25,7 @@ export function LeadForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError(false);
     const data = Object.fromEntries(new FormData(e.currentTarget));
@@ -90,8 +92,9 @@ export function LeadForm() {
           />
         </div>
         {error && <p className="text-sm text-primary-500">Algo salió mal, probá de nuevo.</p>}
-        <Button type="submit" variant="primary" disabled={saving} className="w-full">
-          Enviar
+        <Button type="submit" variant="primary" className="w-full">
+          {saving && <Spinner className="mr-2" />}
+          {saving ? "Enviando…" : "Enviar"}
         </Button>
       </form>
     </Card>

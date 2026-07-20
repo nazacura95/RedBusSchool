@@ -3,10 +3,10 @@ import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { Input, Label } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 async function login(formData: FormData) {
   "use server";
@@ -72,9 +72,9 @@ export default async function LoginPage({
               </div>
               <PasswordInput id="password" name="password" required autoComplete="current-password" />
             </div>
-            <Button type="submit" variant="primary" size="lg" className="w-full">
+            <SubmitButton variant="primary" size="lg" className="w-full" pendingText="Ingresando…">
               Ingresar
-            </Button>
+            </SubmitButton>
           </form>
 
           <p className="mt-4 text-center text-sm text-neutral-500">

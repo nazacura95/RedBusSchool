@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Drawer } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 export function NewTeacherForm({
   onClose,
@@ -23,6 +24,7 @@ export function NewTeacherForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError(null);
 
@@ -90,7 +92,8 @@ export function NewTeacherForm({
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button type="submit">
+            {saving && <Spinner className="mr-2" />}
             {saving ? "Creando…" : "Crear docente"}
           </Button>
         </div>

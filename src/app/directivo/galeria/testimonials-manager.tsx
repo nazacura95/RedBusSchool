@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
 
 type Testimonial = { id: string; quote: string; author: string };
 
@@ -19,7 +20,7 @@ export function TestimonialsManager({ initialTestimonials }: { initialTestimonia
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!quote.trim() || !author.trim()) return;
+    if (saving || !quote.trim() || !author.trim()) return;
     setSaving(true);
     setError(null);
     const res = await fetch("/api/testimonials", {
@@ -82,7 +83,8 @@ export function TestimonialsManager({ initialTestimonials }: { initialTestimonia
               placeholder="Ej: Mamá de Sofía, Nivel 2"
             />
           </div>
-          <Button type="submit" disabled={!quote.trim() || !author.trim() || saving}>
+          <Button type="submit" disabled={!quote.trim() || !author.trim()}>
+            {saving && <Spinner className="mr-2" />}
             {saving ? "Guardando…" : "Agregar"}
           </Button>
         </form>

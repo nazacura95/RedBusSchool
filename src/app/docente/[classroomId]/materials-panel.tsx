@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 
 type Material = { id: string; title: string; fileUrl: string; fileType: string };
 
@@ -24,7 +25,7 @@ export function MaterialsPanel({
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (!file || !title.trim()) return;
+    if (uploading || !file || !title.trim()) return;
     setUploading(true);
     setError(null);
     const form = new FormData();
@@ -77,7 +78,8 @@ export function MaterialsPanel({
             className="block text-sm text-neutral-700"
           />
         </div>
-        <Button type="submit" disabled={!file || !title.trim() || uploading}>
+        <Button type="submit" disabled={!file || !title.trim()}>
+          {uploading && <Spinner className="mr-2" />}
           {uploading ? "Subiendo…" : "Subir material"}
         </Button>
       </form>

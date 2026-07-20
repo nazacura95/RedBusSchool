@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { DrawerSkeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -45,7 +47,7 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
   }, [teacherId]);
 
   async function handleToggleAccess() {
-    if (!teacher) return;
+    if (!teacher || togglingAccess) return;
     setTogglingAccess(true);
     setWhatsappStatus(null);
     const res = await fetch(`/api/teachers/${teacherId}`, {
@@ -66,7 +68,7 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
   return (
     <Drawer open onClose={onClose} title={teacher?.user.name ?? "Cargando…"} subtitle="Legajo del docente">
       {!teacher ? (
-        <p className="text-sm text-neutral-500">Cargando...</p>
+        <DrawerSkeleton />
       ) : (
         <>
           <DrawerSection title="Datos personales">
@@ -93,8 +95,8 @@ export function TeacherDrawer({ teacherId, onClose }: { teacherId: string; onClo
                 size="sm"
                 variant={teacher.user.enabled ? "secondary" : "primary"}
                 onClick={handleToggleAccess}
-                disabled={togglingAccess}
               >
+                {togglingAccess && <Spinner className="mr-2" />}
                 {togglingAccess ? "Guardando…" : teacher.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
               </Button>
             </div>

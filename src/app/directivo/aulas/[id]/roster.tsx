@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { EnrollmentStatusBadge } from "@/components/ui/badge";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { Drawer } from "@/components/ui/drawer";
+import { Spinner } from "@/components/ui/spinner";
 
 type EnrollmentItem = {
   id: string;
@@ -140,6 +141,7 @@ function EnrollForm({
   }, [allStudents, enrolledIds, query]);
 
   async function handleEnroll(studentId: string) {
+    if (savingId) return;
     setSavingId(studentId);
     setError(null);
     const res = await fetch(`/api/classrooms/${classroomId}/enrollments`, {
@@ -169,11 +171,13 @@ function EnrollForm({
           <li key={s.id}>
             <button
               type="button"
-              disabled={savingId === s.id}
               onClick={() => handleEnroll(s.id)}
-              className="flex w-full items-center justify-between rounded-lg border border-neutral-100 px-3 py-2 text-left text-sm hover:bg-neutral-50 disabled:opacity-50"
+              className="flex w-full items-center justify-between rounded-lg border border-neutral-100 px-3 py-2 text-left text-sm hover:bg-neutral-50"
             >
-              <span className="font-medium text-neutral-900">{s.user.name}</span>
+              <span className="flex items-center gap-2 font-medium text-neutral-900">
+                {savingId === s.id && <Spinner />}
+                {s.user.name}
+              </span>
               <span className="text-neutral-400">{s.dni ?? "—"}</span>
             </button>
           </li>

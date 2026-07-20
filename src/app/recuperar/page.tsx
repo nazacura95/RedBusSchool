@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { Input, Label } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function RecuperarPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function RecuperarPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError(null);
     const res = await fetch("/api/auth/activar", {
@@ -92,7 +94,8 @@ export default function RecuperarPage() {
                 onChange={(e) => set("password", e.target.value)}
               />
             </div>
-            <Button type="submit" variant="primary" size="lg" className="w-full" disabled={saving}>
+            <Button type="submit" variant="primary" size="lg" className="w-full">
+              {saving && <Spinner className="mr-2" />}
               {saving ? "Guardando…" : "Guardar contraseña"}
             </Button>
           </form>

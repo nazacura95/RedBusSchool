@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { Spinner } from "@/components/ui/spinner";
 
 type LeadStatus = "NUEVO" | "CONTACTADO" | "INSCRIPTO" | "DESCARTADO";
 
@@ -87,6 +88,7 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
+    if (saving) return;
     setSaving(true);
     const res = await fetch(`/api/leads/${lead.id}`, {
       method: "PATCH",
@@ -136,8 +138,9 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             placeholder="Notas de seguimiento…"
           />
         </div>
-        <Button variant="primary" onClick={handleSave} disabled={saving}>
-          Guardar
+        <Button variant="primary" onClick={handleSave}>
+          {saving && <Spinner className="mr-2" />}
+          {saving ? "Guardando…" : "Guardar"}
         </Button>
       </DrawerSection>
     </Drawer>

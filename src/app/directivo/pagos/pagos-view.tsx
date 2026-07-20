@@ -9,6 +9,8 @@ import { Input, Label } from "@/components/ui/input";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { PaymentStatusBadge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
+import { TableRowsSkeleton } from "@/components/ui/skeleton";
 import { PagosHistoricoChart } from "../charts";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -43,16 +45,23 @@ export function PagosView({
 }) {
   const [period, setPeriod] = useState(currentPeriod);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const { showToast } = useToast();
 
   function refresh() {
     fetch(`/api/payments?period=${period}`)
       .then((res) => res.json())
-      .then((data) => setPayments(data));
+      .then((data) => setPayments(data))
+      .finally(() => setLoading(false));
   }
 
   useEffect(refresh, [period]);
+
+  function handlePeriodChange(value: string) {
+    setLoading(true);
+    setPeriod(value);
+  }
 
   return (
     <div className="space-y-6">
@@ -87,7 +96,7 @@ export function PagosView({
               id="period-filter"
               type="month"
               value={period}
-              onChange={(e) => setPeriod(e.target.value)}
+              onChange={(e) => handlePeriodChange(e.target.value)}
               className="w-40"
             />
           </div>
@@ -104,7 +113,8 @@ export function PagosView({
             </Tr>
           </Thead>
           <Tbody>
-            {payments.map((p) => (
+            {loading && <TableRowsSkeleton rows={5} cols={5} />}
+            {!loading && payments.map((p) => (
               <Tr key={p.id}>
                 <Td className="font-medium text-neutral-900">{p.student.user.name}</Td>
                 <Td className="tabular-nums">{currency.format(Number(p.amount))}</Td>
@@ -115,7 +125,7 @@ export function PagosView({
                 <Td>{p.dueDate ? new Date(p.dueDate).toLocaleDateString("es-AR") : "—"}</Td>
               </Tr>
             ))}
-            {payments.length === 0 && (
+            {!loading && payments.length === 0 && (
               <Tr>
                 <Td colSpan={5} className="text-center text-neutral-500">
                   Sin pagos registrados en {period}.
@@ -165,7 +175,7 @@ function NewPaymentForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!studentId || !period || !amount) return;
+    if (saving || !studentId || !period || !amount) return;
     setSaving(true);
     setError(null);
     const res = await fetch("/api/payments", {
@@ -245,7 +255,8 @@ function NewPaymentForm({
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit">
+              {saving && <Spinner className="mr-2" />}
               {saving ? "Guardando…" : "Guardar"}
             </Button>
           </div>

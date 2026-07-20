@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { DrawerSkeleton } from "@/components/ui/skeleton";
 import { Badge, EnrollmentStatusBadge, PaymentStatusBadge } from "@/components/ui/badge";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
 
 type Contact = { id: string; name: string; relationship: string; phone: string; email: string | null };
 
@@ -65,7 +67,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
   const attendanceRows = student ? attendanceSummary(student.enrollments) : [];
 
   async function handleToggleAccess() {
-    if (!student) return;
+    if (!student || togglingAccess) return;
     setTogglingAccess(true);
     setWhatsappStatus(null);
     const res = await fetch(`/api/students/${studentId}`, {
@@ -85,6 +87,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
 
   async function handleAddContact(e: React.FormEvent) {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     const res = await fetch(`/api/students/${studentId}/contacts`, {
       method: "POST",
@@ -104,6 +107,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
 
   async function handleAddPayment(e: React.FormEvent) {
     e.preventDefault();
+    if (savingPayment) return;
     setSavingPayment(true);
     const res = await fetch(`/api/students/${studentId}/payments`, {
       method: "POST",
@@ -143,7 +147,7 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
       subtitle={student?.dni ? `DNI ${student.dni}` : undefined}
     >
       {!student ? (
-        <p className="text-sm text-neutral-500">Cargando...</p>
+        <DrawerSkeleton />
       ) : (
         <>
           <DrawerSection title="Datos personales">
@@ -170,8 +174,8 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
                 size="sm"
                 variant={student.user.enabled ? "secondary" : "primary"}
                 onClick={handleToggleAccess}
-                disabled={togglingAccess}
               >
+                {togglingAccess && <Spinner className="mr-2" />}
                 {togglingAccess ? "Guardando…" : student.user.enabled ? "Deshabilitar" : "Habilitar acceso"}
               </Button>
             </div>
@@ -233,8 +237,9 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
                   onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
                 />
                 <div className="flex gap-2">
-                  <Button type="submit" size="sm" disabled={saving}>
-                    Guardar
+                  <Button type="submit" size="sm">
+                    {saving && <Spinner className="mr-2" />}
+                    {saving ? "Guardando…" : "Guardar"}
                   </Button>
                   <Button type="button" variant="ghost" size="sm" onClick={() => setShowContactForm(false)}>
                     Cancelar
@@ -352,8 +357,9 @@ export function StudentDrawer({ studentId, onClose }: { studentId: string; onClo
                   Marcar como pagado
                 </label>
                 <div className="flex gap-2">
-                  <Button type="submit" size="sm" disabled={savingPayment}>
-                    Guardar
+                  <Button type="submit" size="sm">
+                    {savingPayment && <Spinner className="mr-2" />}
+                    {savingPayment ? "Guardando…" : "Guardar"}
                   </Button>
                   <Button type="button" variant="ghost" size="sm" onClick={() => setShowPaymentForm(false)}>
                     Cancelar

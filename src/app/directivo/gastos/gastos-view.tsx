@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/spinner";
+import { TableRowsSkeleton } from "@/components/ui/skeleton";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 const selectClass =
@@ -47,16 +49,23 @@ export function GastosView({
 }) {
   const [period, setPeriod] = useState(currentPeriod);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const { showToast } = useToast();
 
   function load() {
     fetch(`/api/expenses?period=${period}`)
       .then((res) => res.json())
-      .then(setExpenses);
+      .then(setExpenses)
+      .finally(() => setLoading(false));
   }
 
   useEffect(load, [period]);
+
+  function handlePeriodChange(value: string) {
+    setLoading(true);
+    setPeriod(value);
+  }
 
   async function handleDelete(id: string) {
     if (!confirm("¿Eliminar este gasto?")) return;
@@ -117,7 +126,7 @@ export function GastosView({
               id="period-filter"
               type="month"
               value={period}
-              onChange={(e) => setPeriod(e.target.value)}
+              onChange={(e) => handlePeriodChange(e.target.value)}
               className="w-40"
             />
           </div>
@@ -134,7 +143,8 @@ export function GastosView({
             </Tr>
           </Thead>
           <Tbody>
-            {expenses.map((e) => (
+            {loading && <TableRowsSkeleton rows={5} cols={5} />}
+            {!loading && expenses.map((e) => (
               <Tr key={e.id}>
                 <Td>{new Date(e.date).toLocaleDateString("es-AR", { timeZone: "UTC" })}</Td>
                 <Td className="font-medium text-neutral-900">{e.category}</Td>
@@ -151,7 +161,7 @@ export function GastosView({
                 </Td>
               </Tr>
             ))}
-            {expenses.length === 0 && (
+            {!loading && expenses.length === 0 && (
               <Tr>
                 <Td colSpan={5} className="text-center text-neutral-500">
                   Sin gastos registrados en {period}.
@@ -186,7 +196,7 @@ function NewExpenseForm({ onClose, onCreated }: { onClose: () => void; onCreated
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!category || !amount || !date) return;
+    if (saving || !category || !amount || !date) return;
     setSaving(true);
     setError(null);
     const res = await fetch("/api/expenses", {
@@ -249,7 +259,8 @@ function NewExpenseForm({ onClose, onCreated }: { onClose: () => void; onCreated
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit">
+              {saving && <Spinner className="mr-2" />}
               {saving ? "Guardando…" : "Guardar"}
             </Button>
           </div>
