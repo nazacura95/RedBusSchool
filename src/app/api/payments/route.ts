@@ -1,16 +1,16 @@
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/require-role";
+import { requireOrg, assertSameOrg } from "@/lib/require-org";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period");
 
   const payments = await prisma.payment.findMany({
-    where: period ? { period } : undefined,
+    where: { organizationId, ...(period && { period }) },
     include: { student: { select: { id: true, user: { select: { name: true } } } } },
     orderBy: [{ period: "desc" }, { createdAt: "desc" }],
   });
@@ -19,12 +19,17 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { studentId, period, amount, method, paid, dueDate } = await req.json();
   if (!studentId || !period || !amount) {
     return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
+  }
+
+  const student = await prisma.studentProfile.findUnique({ where: { id: studentId }, select: { organizationId: true } });
+  if (!assertSameOrg(student?.organizationId, organizationId)) {
+    return NextResponse.json({ error: "Alumno inválido" }, { status: 400 });
   }
 
   const payment = await prisma.payment.create({
@@ -36,6 +41,7 @@ export async function POST(req: Request) {
       status: paid ? "PAGADO" : "PENDIENTE",
       paidAt: paid ? new Date() : null,
       dueDate: dueDate ? new Date(dueDate) : null,
+      organizationId,
     },
     include: { student: { select: { id: true, user: { select: { name: true } } } } },
   });

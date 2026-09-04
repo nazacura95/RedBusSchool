@@ -12,7 +12,7 @@ export default async function GaleriaPage() {
   ]);
 
   return (
-    <AppShell roles={session!.user.roles} name={session!.user.name} title="Galería">
+    <AppShell organizationId={session!.user.organizationId} roles={session!.user.roles} name={session!.user.name} title="Galería">
       <GalleryManager initialImages={images} />
       <TestimonialsManager initialTestimonials={testimonials} />
     </AppShell>

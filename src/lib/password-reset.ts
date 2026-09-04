@@ -42,10 +42,12 @@ export async function activateOrResetPassword(email: string, dni: string, phone:
   return { ok: true as const };
 }
 
-export async function sendWelcomeWhatsApp(name: string, email: string, phone: string) {
-  const loginUrl = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/recuperar` : "https://red-bus-school.vercel.app/recuperar";
+export async function sendWelcomeWhatsApp(name: string, email: string, phone: string, orgName: string) {
+  // la URL de recuperar es la misma para todos los institutos (un solo dominio, sin
+  // subdominio por organización — ver decisión de arquitectura de la migración multi-tenant).
+  const loginUrl = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/recuperar` : "https://bedel.com.ar/recuperar";
   await sendWhatsAppText(
     normalizePhone(phone),
-    `¡Hola ${name}! Ya podés entrar a Redbus School of English. Andá a ${loginUrl} y con tu email (${email}), DNI y teléfono vas a poder elegir tu contraseña.`,
+    `¡Hola ${name}! Ya podés entrar a ${orgName}. Andá a ${loginUrl} y con tu email (${email}), DNI y teléfono vas a poder elegir tu contraseña.`,
   );
 }

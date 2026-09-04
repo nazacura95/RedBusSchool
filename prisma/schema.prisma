@@ -37,22 +37,60 @@ enum LeadStatus {
   DESCARTADO
 }
 
+// Un instituto/institución cliente de Bedel. Migración A: organizationId nace nullable en
+// todos los modelos de abajo para poder backfillear datos existentes de Red Bus antes de
+// exigirlo — ver prisma/scripts/backfill-organization.ts. No tocar a required sin haber
+// corrido y verificado ese backfill primero.
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  // marca propia del instituto: se aplica al sidebar/dashboard/WhatsApp/mails una vez logueado
+  // (el login público sigue neutro — no hay forma de saber la organización antes de loguearse,
+  // ver src/lib/color-scale.ts para cómo se deriva la escala completa de este único hex).
+  logoUrl         String?
+  primaryColorHex String?
+  createdAt       DateTime @default(now())
+
+  users                 User[]
+  students              StudentProfile[]
+  teachers              TeacherProfile[]
+  classrooms            Classroom[]
+  payments              Payment[]
+  payrollItems          PayrollItem[]
+  expenses              Expense[]
+  leads                 Lead[]
+  whatsappConversations WhatsAppConversation[]
+
+  @@map("organizations")
+}
+
 // Un usuario del sistema. Puede tener más de un rol (ej. una dueña que también da clases).
+// El email sigue siendo único global (no por organización): como el login no tiene selector
+// de instituto ni subdominio, el email es la única señal para encontrar la fila — una misma
+// persona que trabaje en dos institutos Bedel necesita dos emails distintos (limitación de v1).
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String
-  name          String
-  roles         Role[]
+  id              String        @id @default(cuid())
+  email           String        @unique
+  passwordHash    String
+  name            String
+  roles           Role[]
   // habilita el autoregistro (elegir contraseña) y el login; el directivo lo activa a mano
   // desde el legajo una vez que carga los datos del alumno/docente.
-  enabled       Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  enabled         Boolean       @default(true)
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  // cuenta operativa de Bedel (no de un instituto cliente): da de alta organizaciones nuevas
+  // desde /admin. No tiene organizationId — no pertenece a ningún instituto. Se crea a mano con
+  // prisma/scripts/create-platform-admin.ts, nunca desde un formulario público.
+  isPlatformAdmin Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   studentProfile StudentProfile?
   teacherProfile TeacherProfile?
 
+  @@index([organizationId])
   @@map("users")
 }
 
@@ -68,15 +106,17 @@ model LoginAttempt {
 
 // Legajo del alumno: datos personales e historial que no están en User.
 model StudentProfile {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dni          String?  @unique
-  phone        String?
-  birthDate    DateTime?
-  address      String?
-  notes        String?  // observaciones del legajo académico
-  createdAt    DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dni            String?       @unique // migración B: pasa a @@unique([organizationId, dni])
+  phone          String?
+  birthDate      DateTime?
+  address        String?
+  notes          String? // observaciones del legajo académico
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
 
   enrollments  Enrollment[]
   payments     Payment[]
@@ -84,6 +124,7 @@ model StudentProfile {
   submissions  Submission[]
   contacts     EmergencyContact[]
 
+  @@index([organizationId])
   @@map("student_profiles")
 }
 
@@ -92,7 +133,7 @@ model EmergencyContact {
   id           String         @id @default(cuid())
   studentId    String
   student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  relationship String         // "Padre", "Madre", "Tutor/a", "Otro"
+  relationship String // "Padre", "Madre", "Tutor/a", "Otro"
   name         String
   phone        String
   email        String?
@@ -104,32 +145,37 @@ model EmergencyContact {
 
 // Datos propios del docente (las dueñas también tienen este perfil si dan clases).
 model TeacherProfile {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dni        String?  @unique
-  phone      String?
-  address    String?
-  hourlyRate Decimal? @db.Decimal(10, 2) // para liquidación de nómina
-  createdAt  DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dni            String?       @unique // migración B: pasa a @@unique([organizationId, dni])
+  phone          String?
+  address        String?
+  hourlyRate     Decimal?      @db.Decimal(10, 2) // para liquidación de nómina
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
 
   classrooms   Classroom[]
   payrollItems PayrollItem[]
 
+  @@index([organizationId])
   @@map("teacher_profiles")
 }
 
 // Aula: un grupo de nivel a cargo de un docente.
 model Classroom {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  level     String   // texto libre por ahora (ej "Nivel 3", "B1") — pasar a tabla de niveles cuando definan la nomenclatura
-  teacherId String
-  teacher   TeacherProfile @relation(fields: [teacherId], references: [id])
-  dayOfWeek Int[]    @default([]) // 0=domingo … 6=sábado; puede tener más de un día por semana
-  startTime String?  // "18:00"
-  endTime   String?  // "19:30"
-  createdAt DateTime @default(now())
+  id             String         @id @default(cuid())
+  name           String         @unique // migración B: pasa a @@unique([organizationId, name])
+  level          String // texto libre por ahora (ej "Nivel 3", "B1") — pasar a tabla de niveles cuando definan la nomenclatura
+  teacherId      String
+  teacher        TeacherProfile @relation(fields: [teacherId], references: [id])
+  dayOfWeek      Int[]          @default([]) // 0=domingo … 6=sábado; puede tener más de un día por semana
+  startTime      String? // "18:00"
+  endTime        String? // "19:30"
+  organizationId String?
+  organization   Organization?  @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime       @default(now())
 
   enrollments Enrollment[]
   materials   Material[]
@@ -137,6 +183,7 @@ model Classroom {
   recordings  Recording[]
 
   @@index([teacherId])
+  @@index([organizationId])
   @@map("classrooms")
 }
 
@@ -178,8 +225,8 @@ model Material {
   classroomId String
   classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   title       String
-  fileUrl     String    // URL en Vercel Blob
-  fileType    String    // pdf, doc, audio, etc.
+  fileUrl     String // URL en Vercel Blob
+  fileType    String // pdf, doc, audio, etc.
   createdAt   DateTime  @default(now())
 
   @@index([classroomId])
@@ -192,7 +239,7 @@ model Recording {
   classroomId String
   classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   title       String
-  videoUrl    String    // URL en Vercel Blob o embed externo
+  videoUrl    String // URL en Vercel Blob o embed externo
   createdAt   DateTime  @default(now())
 
   @@index([classroomId])
@@ -217,17 +264,17 @@ model Assignment {
 
 // Entrega de un alumno para una tarea, con corrección del docente.
 model Submission {
-  id           String            @id @default(cuid())
+  id           String           @id @default(cuid())
   assignmentId String
-  assignment   Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   studentId    String
-  student      StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  content      String?           // texto de la entrega
-  fileUrl      String?           // adjunto opcional
-  status       SubmissionStatus  @default(ENTREGADO)
+  student      StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  content      String? // texto de la entrega
+  fileUrl      String? // adjunto opcional
+  status       SubmissionStatus @default(ENTREGADO)
   grade        String?
   feedback     String?
-  submittedAt  DateTime          @default(now())
+  submittedAt  DateTime         @default(now())
   gradedAt     DateTime?
 
   @@unique([assignmentId, studentId])
@@ -237,12 +284,12 @@ model Submission {
 
 // Certificado emitido a un alumno.
 model Certificate {
-  id          String   @id @default(cuid())
-  studentId   String
-  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  title       String   // ej "Certificado Nivel 3 completo"
-  issuedAt    DateTime @default(now())
-  fileUrl     String?  // PDF generado/subido
+  id        String         @id @default(cuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title     String // ej "Certificado Nivel 3 completo"
+  issuedAt  DateTime       @default(now())
+  fileUrl   String? // PDF generado/subido
 
   @@index([studentId])
   @@map("certificates")
@@ -251,82 +298,102 @@ model Certificate {
 // Pago de cuota registrado manualmente (MVP). Preparado para sumar Mercado Pago
 // (mpPaymentId/mpStatus) sin migrar el modelo cuando se integre el gateway.
 model Payment {
-  id            String        @id @default(cuid())
-  studentId     String
-  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  amount        Decimal       @db.Decimal(10, 2)
-  period        String        // ej "2026-07" (mes que cubre la cuota)
-  status        PaymentStatus @default(PENDIENTE)
-  paidAt        DateTime?
-  method        String?       // efectivo, transferencia, mercadopago...
-  mpPaymentId   String?       // id de pago en Mercado Pago, cuando aplique
-  notes         String?
-  dueDate       DateTime?     // vencimiento; el cron de recordatorios pasa a VENCIDO cuando pasa
-  remindedAt    DateTime?     // último recordatorio de pago vencido enviado por WhatsApp
-  createdAt     DateTime      @default(now())
+  id             String         @id @default(cuid())
+  studentId      String
+  student        StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amount         Decimal        @db.Decimal(10, 2)
+  period         String // ej "2026-07" (mes que cubre la cuota)
+  status         PaymentStatus  @default(PENDIENTE)
+  paidAt         DateTime?
+  method         String? // efectivo, transferencia, mercadopago...
+  mpPaymentId    String? // id de pago en Mercado Pago, cuando aplique
+  notes          String?
+  dueDate        DateTime? // vencimiento; el cron de recordatorios pasa a VENCIDO cuando pasa
+  remindedAt     DateTime? // último recordatorio de pago vencido enviado por WhatsApp
+  organizationId String?
+  organization   Organization?  @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime       @default(now())
 
   @@index([studentId])
   @@index([period, status])
+  @@index([organizationId])
   @@map("payments")
 }
 
 // Liquidación de horas de un docente por período (nómina básica).
 model PayrollItem {
-  id         String   @id @default(cuid())
-  teacherId  String
-  teacher    TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  period     String   // ej "2026-07"
-  hours      Decimal  @db.Decimal(6, 2)
-  amount     Decimal  @db.Decimal(10, 2)
-  paid       Boolean  @default(false)
-  paidAt     DateTime?
-  createdAt  DateTime @default(now())
+  id             String         @id @default(cuid())
+  teacherId      String
+  teacher        TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  period         String // ej "2026-07"
+  hours          Decimal        @db.Decimal(6, 2)
+  amount         Decimal        @db.Decimal(10, 2)
+  paid           Boolean        @default(false)
+  paidAt         DateTime?
+  organizationId String?
+  organization   Organization?  @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime       @default(now())
 
   @@unique([teacherId, period])
+  @@index([organizationId])
   @@map("payroll_items")
 }
 
 // Gasto operativo del instituto (alquiler, servicios, insumos, eventos, etc).
 model Expense {
-  id          String   @id @default(cuid())
-  category    String   // "Alquiler", "Luz", "Gas", "Agua", "Wifi", "Mobiliario", "Eventos", "Otro"...
-  description String?
-  amount      Decimal  @db.Decimal(10, 2)
-  date        DateTime @db.Date
-  createdAt   DateTime @default(now())
+  id             String        @id @default(cuid())
+  category       String // "Alquiler", "Luz", "Gas", "Agua", "Wifi", "Mobiliario", "Eventos", "Otro"...
+  description    String?
+  amount         Decimal       @db.Decimal(10, 2)
+  date           DateTime      @db.Date
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
 
   @@index([date])
+  @@index([organizationId])
   @@map("expenses")
 }
 
 // Persona interesada en inscribirse que dejó sus datos en la landing pública.
 model Lead {
-  id        String     @id @default(cuid())
-  name      String
-  phone     String
-  email     String?
-  interest  String     // en qué nivel/programa está interesado, texto libre
-  message   String?
-  status    LeadStatus @default(NUEVO)
-  notes     String?    // notas internas de admisiones (seguimiento de contacto)
-  createdAt DateTime   @default(now())
+  id             String        @id @default(cuid())
+  name           String
+  phone          String
+  email          String?
+  interest       String // en qué nivel/programa está interesado, texto libre
+  message        String?
+  status         LeadStatus    @default(NUEVO)
+  notes          String? // notas internas de admisiones (seguimiento de contacto)
+  // la landing pública y el bot de WhatsApp no tienen sesión: se estampa con
+  // getDefaultOrganizationId() (src/lib/default-organization.ts) al crear.
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
 
+  @@index([organizationId])
   @@map("leads")
 }
 
 // Conversación de WhatsApp con un número (prospecto, alumno/familia o consulta de
 // directivo). Guarda en qué paso del guion de prospecto está y si el bot puede
 // seguir escribiéndole (se apaga con la palabra clave de "stop").
+// phone queda único global a propósito, NO @@unique([organizationId, phone]): hoy existe una
+// sola sesión de WhatsApp (OPENWA_SESSION_ID) para todo el deploy, así que no hay forma de
+// rutear un mensaje entrante a más de una organización. organizationId se agrega solo para
+// consistencia de escritura (ver getDefaultOrganizationId) — no hay ruteo multi-sesión todavía.
 model WhatsAppConversation {
-  id         String            @id @default(cuid())
-  phone      String            @unique // dígitos, formato 549XXXXXXXXXX (sin @c.us)
-  botEnabled Boolean           @default(true)
-  flowStep   Int               @default(0) // 0=nuevo, 1=preguntó nivel, 2=preguntó turno, 3=guion completo
-  flowData   Json?             // respuestas acumuladas del guion (paraQuien, nivel, turno)
-  leadId     String?           // Lead creado al completar el guion, si aplica
-  messages   WhatsAppMessage[]
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  id             String            @id @default(cuid())
+  phone          String            @unique // dígitos, formato 549XXXXXXXXXX (sin @c.us)
+  botEnabled     Boolean           @default(true)
+  flowStep       Int               @default(0) // 0=nuevo, 1=preguntó nivel, 2=preguntó turno, 3=guion completo
+  flowData       Json? // respuestas acumuladas del guion (paraQuien, nivel, turno)
+  leadId         String? // Lead creado al completar el guion, si aplica
+  organizationId String?
+  organization   Organization?     @relation(fields: [organizationId], references: [id])
+  messages       WhatsAppMessage[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@map("whatsapp_conversations")
 }
@@ -336,7 +403,7 @@ model WhatsAppMessage {
   id             String               @id @default(cuid())
   conversationId String
   conversation   WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  direction      String               // "in" | "out"
+  direction      String // "in" | "out"
   body           String
   createdAt      DateTime             @default(now())
 
@@ -359,7 +426,7 @@ model SiteImage {
 model Testimonial {
   id        String   @id @default(cuid())
   quote     String
-  author    String   // ej "Mamá de Sofía, Nivel 2"
+  author    String // ej "Mamá de Sofía, Nivel 2"
   order     Int      @default(0)
   createdAt DateTime @default(now())
 

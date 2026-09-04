@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { getDefaultOrganizationId } from "@/lib/default-organization";
 
-const OPT_OUT_KEYWORDS = ["stop red bus", "stop redbus", "stop"];
-const OPT_IN_KEYWORDS = ["activar red bus", "activar redbus", "reactivar red bus"];
+// genéricas a propósito (sin nombre de marca): antes decían "stop red bus"/"activar red bus",
+// pero ahora el bot puede hablar en nombre de cualquier organización (ver getOrgName abajo).
+const OPT_OUT_KEYWORDS = ["stop"];
+const OPT_IN_KEYWORDS = ["activar"];
 
 function normalize(text: string) {
   return text.trim().toLowerCase();
@@ -9,17 +12,32 @@ function normalize(text: string) {
 
 type FlowData = { paraQuien?: string; nivel?: string; turno?: string };
 
-const BIENVENIDA =
-  "¡Hola! 👋 Bienvenido/a a *Redbus School of English* 🚌📚 Instituto de inglés en José C. Paz. " +
-  "Este es un chat de prueba para ver cómo se va a sentir la atención automática — ¡ya casi arrancamos de verdad!";
+function welcomeMessage(orgName: string) {
+  return (
+    `¡Hola! 👋 Bienvenido/a a *${orgName}*. ` +
+    "Este es un chat de prueba para ver cómo se va a sentir la atención automática — ¡ya casi arrancamos de verdad!"
+  );
+}
 
 const PREGUNTA_PARA_QUIEN = "¿Sos vos quien está interesado/a en las clases, o preguntás para un hijo/a?";
 const PREGUNTA_NIVEL =
-  '¿Qué nivel de inglés tenés hoy? Podés responder algo como "ninguno", "básico", "intermedio" o "ya hablo pero quiero practicar".';
+  '¿Qué nivel tenés hoy? Podés responder algo como "ninguno", "básico", "intermedio" o "ya sé pero quiero practicar".';
 const PREGUNTA_TURNO = "Genial, ¡gracias! Con esa info te podemos armar la comisión que mejor te quede. ¿Preferís clases de mañana, tarde o noche?";
-const CIERRE =
-  "Perfecto ✅ Ya tenemos lo básico. En breve alguien del equipo de admisiones te escribe para coordinar una entrevista rápida o prueba de nivel. " +
-  "Mientras tanto, conocé más del instituto acá: https://red-bus-school.vercel.app 🚌";
+
+function closingMessage(orgName: string) {
+  return (
+    "Perfecto ✅ Ya tenemos lo básico. En breve alguien del equipo de admisiones te escribe para coordinar una entrevista rápida o prueba de nivel. " +
+    `Gracias por tu interés en ${orgName} 🙌`
+  );
+}
+
+// hoy solo existe una sesión de WhatsApp para todo el deploy (ver default-organization.ts) —
+// esto resuelve tanto el id como el nombre de esa única organización que puede usar el bot.
+async function getDefaultOrganization(): Promise<{ id: string; name: string }> {
+  const id = await getDefaultOrganizationId();
+  const org = await prisma.organization.findUniqueOrThrow({ where: { id }, select: { name: true } });
+  return { id, name: org.name };
+}
 
 /**
  * Procesa un mensaje entrante de un número ya habilitado (allowlist verificada
@@ -27,10 +45,11 @@ const CIERRE =
  */
 export async function handleIncomingMessage(phone: string, body: string): Promise<string[]> {
   const normalized = normalize(body);
+  const org = await getDefaultOrganization();
 
   let conversation = await prisma.whatsAppConversation.findUnique({ where: { phone } });
   if (!conversation) {
-    conversation = await prisma.whatsAppConversation.create({ data: { phone } });
+    conversation = await prisma.whatsAppConversation.create({ data: { phone, organizationId: org.id } });
   }
 
   await prisma.whatsAppMessage.create({
@@ -42,7 +61,7 @@ export async function handleIncomingMessage(phone: string, body: string): Promis
     await prisma.whatsAppConversation.update({ where: { id: conversation.id }, data: { botEnabled: false } });
     return await reply(
       conversation.id,
-      "Listo, no te vamos a volver a escribir por acá 👍 Si en algún momento querés reactivarlo, mandanos \"ACTIVAR RED BUS\".",
+      "Listo, no te vamos a volver a escribir por acá 👍 Si en algún momento querés reactivarlo, mandanos \"ACTIVAR\".",
     );
   }
   if (!conversation.botEnabled) {
@@ -57,7 +76,7 @@ export async function handleIncomingMessage(phone: string, body: string): Promis
 
   if (conversation.flowStep === 0) {
     await prisma.whatsAppConversation.update({ where: { id: conversation.id }, data: { flowStep: 1 } });
-    return await reply(conversation.id, BIENVENIDA, PREGUNTA_PARA_QUIEN);
+    return await reply(conversation.id, welcomeMessage(org.name), PREGUNTA_PARA_QUIEN);
   }
 
   if (conversation.flowStep === 1) {
@@ -87,6 +106,7 @@ export async function handleIncomingMessage(phone: string, body: string): Promis
         phone,
         interest: [data.nivel, data.turno].filter(Boolean).join(" / ") || "sin especificar",
         message: `Para: ${data.paraQuien ?? "-"} · Nivel: ${data.nivel ?? "-"} · Turno: ${data.turno ?? "-"}`,
+        organizationId: org.id,
       },
     });
 
@@ -94,7 +114,7 @@ export async function handleIncomingMessage(phone: string, body: string): Promis
       where: { id: conversation.id },
       data: { flowStep: 4, flowData: data, leadId: lead.id },
     });
-    return await reply(conversation.id, CIERRE);
+    return await reply(conversation.id, closingMessage(org.name));
   }
 
   // guion ya completo (flowStep >= 4): el bot no vuelve a escribir solo, lo retoma un humano

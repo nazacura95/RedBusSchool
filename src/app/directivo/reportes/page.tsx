@@ -15,7 +15,7 @@ export default async function ReportesPage() {
   const session = await auth();
 
   return (
-    <AppShell roles={session!.user.roles} name={session!.user.name} title="Reportes">
+    <AppShell organizationId={session!.user.organizationId} roles={session!.user.roles} name={session!.user.name} title="Reportes">
       <div>
         <h2 className="text-2xl font-bold text-neutral-900">Reportes</h2>
         <p className="text-sm text-neutral-500">

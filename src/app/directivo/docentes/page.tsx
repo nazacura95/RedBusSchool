@@ -1,12 +1,13 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSessionOrg } from "@/lib/require-org";
 import { AppShell } from "@/components/app-shell";
 import { DocentesTable } from "./docentes-table";
 
 export default async function DocentesPage() {
-  const session = await auth();
+  const { session, organizationId } = await getSessionOrg();
 
   const teachers = await prisma.teacherProfile.findMany({
+    where: { organizationId },
     select: {
       id: true,
       dni: true,
@@ -19,7 +20,7 @@ export default async function DocentesPage() {
   });
 
   return (
-    <AppShell roles={session!.user.roles} name={session!.user.name} title="Docentes">
+    <AppShell organizationId={organizationId} roles={session.user.roles} name={session.user.name} title="Docentes">
       <DocentesTable
         initialTeachers={teachers.map((t) => ({
           ...t,

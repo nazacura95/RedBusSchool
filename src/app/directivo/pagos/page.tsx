@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSessionOrg } from "@/lib/require-org";
 import { AppShell } from "@/components/app-shell";
 import { PagosView } from "./pagos-view";
 
@@ -19,22 +19,23 @@ function lastPeriods(n: number) {
 }
 
 export default async function PagosPage() {
-  const session = await auth();
+  const { session, organizationId } = await getSessionOrg();
   const period = currentPeriod();
   const periods = lastPeriods(6);
 
   const [students, grouped, historicoPagado] = await Promise.all([
     prisma.studentProfile.findMany({
+      where: { organizationId },
       select: { id: true, user: { select: { name: true } } },
       orderBy: { user: { name: "asc" } },
     }),
     prisma.payment.groupBy({
       by: ["period", "status"],
-      where: { period: { in: periods } },
+      where: { organizationId, period: { in: periods } },
       _sum: { amount: true },
     }),
     prisma.payment.aggregate({
-      where: { status: "PAGADO" },
+      where: { organizationId, status: "PAGADO" },
       _sum: { amount: true },
     }),
   ]);
@@ -54,7 +55,7 @@ export default async function PagosPage() {
   const currentMonth = trend[trend.length - 1];
 
   return (
-    <AppShell roles={session!.user.roles} name={session!.user.name} title="Pagos">
+    <AppShell organizationId={organizationId} roles={session.user.roles} name={session.user.name} title="Pagos">
       <PagosView
         students={students.map((s) => ({ id: s.id, name: s.user.name }))}
         currentPeriod={period}

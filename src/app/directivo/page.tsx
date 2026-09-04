@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSessionOrg } from "@/lib/require-org";
 import { AppShell } from "@/components/app-shell";
 import { StatTile } from "@/components/ui/stat-tile";
 import { Card } from "@/components/ui/card";
@@ -9,24 +9,25 @@ import { AlumnosPorNivelChart, EstadoPagosChart } from "./charts";
 import { findAtRiskStudents } from "@/lib/at-risk";
 
 export default async function DirectivoDashboard() {
-  const session = await auth();
+  const { session, organizationId } = await getSessionOrg();
 
   const currentPeriod = new Date().toISOString().slice(0, 7); // "YYYY-MM"
 
   const [totalAlumnos, totalDocentes, totalAulas, pagosPendientes, aulas, pagos, atRisk] = await Promise.all([
-    prisma.studentProfile.count(),
-    prisma.teacherProfile.count(),
-    prisma.classroom.count(),
-    prisma.payment.count({ where: { status: "PENDIENTE" } }),
+    prisma.studentProfile.count({ where: { organizationId } }),
+    prisma.teacherProfile.count({ where: { organizationId } }),
+    prisma.classroom.count({ where: { organizationId } }),
+    prisma.payment.count({ where: { organizationId, status: "PENDIENTE" } }),
     prisma.classroom.findMany({
+      where: { organizationId },
       include: { enrollments: { where: { status: "ACTIVA" } } },
     }),
     prisma.payment.groupBy({
       by: ["status"],
-      where: { period: currentPeriod },
+      where: { organizationId, period: currentPeriod },
       _count: { _all: true },
     }),
-    findAtRiskStudents(),
+    findAtRiskStudents(organizationId),
   ]);
 
   const porNivel = new Map<string, number>();
@@ -38,9 +39,9 @@ export default async function DirectivoDashboard() {
   const estadoPagos = pagos.map((p) => ({ status: p.status, cantidad: p._count._all }));
 
   return (
-    <AppShell roles={session!.user.roles} name={session!.user.name} title="Panel de Dirección">
+    <AppShell organizationId={organizationId} roles={session.user.roles} name={session.user.name} title="Panel de Dirección">
       <div>
-        <h2 className="text-2xl font-bold text-neutral-900">Hola, {session!.user.name}</h2>
+        <h2 className="text-2xl font-bold text-neutral-900">Hola, {session.user.name}</h2>
         <p className="text-sm text-neutral-500">Resumen general del instituto.</p>
       </div>
 

@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSessionOrg } from "@/lib/require-org";
 import { AppShell } from "@/components/app-shell";
 import { GastosView } from "./gastos-view";
 
@@ -8,15 +8,15 @@ function currentPeriod() {
 }
 
 export default async function GastosPage() {
-  const session = await auth();
+  const { session, organizationId } = await getSessionOrg();
   const period = currentPeriod();
   const [year, month] = period.split("-").map(Number);
   const from = new Date(Date.UTC(year, month - 1, 1));
   const to = new Date(Date.UTC(year, month, 1));
 
   const [currentMonthExpenses, historicoTotal] = await Promise.all([
-    prisma.expense.findMany({ where: { date: { gte: from, lt: to } } }),
-    prisma.expense.aggregate({ _sum: { amount: true } }),
+    prisma.expense.findMany({ where: { organizationId, date: { gte: from, lt: to } } }),
+    prisma.expense.aggregate({ where: { organizationId }, _sum: { amount: true } }),
   ]);
 
   const totalMes = currentMonthExpenses.reduce((acc, e) => acc + Number(e.amount), 0);
@@ -30,7 +30,7 @@ export default async function GastosPage() {
   );
 
   return (
-    <AppShell roles={session!.user.roles} name={session!.user.name} title="Gastos">
+    <AppShell organizationId={organizationId} roles={session.user.roles} name={session.user.name} title="Gastos">
       <GastosView
         currentPeriod={period}
         totalMes={totalMes}

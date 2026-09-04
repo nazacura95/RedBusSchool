@@ -1,13 +1,14 @@
 import { prisma, PUBLIC_USER_SELECT } from "@/lib/prisma";
-import { requireRole } from "@/lib/require-role";
+import { requireOrg } from "@/lib/require-org";
 import { generatePendingPasswordHash } from "@/lib/pending-account";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const students = await prisma.studentProfile.findMany({
+    where: { organizationId },
     include: {
       user: { select: PUBLIC_USER_SELECT },
       enrollments: { include: { classroom: true }, orderBy: { startDate: "desc" } },
@@ -20,7 +21,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { name, email, dni, phone, address, birthDate } = await req.json();
@@ -37,7 +38,10 @@ export async function POST(req: Request) {
         phone,
         address: address || null,
         birthDate: birthDate ? new Date(birthDate) : null,
-        user: { create: { name, email, passwordHash, roles: ["ALUMNO"], enabled: false } },
+        // Prisma no acepta el escalar organizationId junto con un `user: { create }` anidado
+        // en el mismo create() — hay que usar la forma de relación (connect) para StudentProfile.
+        organization: { connect: { id: organizationId } },
+        user: { create: { name, email, passwordHash, roles: ["ALUMNO"], enabled: false, organizationId } },
       },
       include: { user: { select: PUBLIC_USER_SELECT } },
     });

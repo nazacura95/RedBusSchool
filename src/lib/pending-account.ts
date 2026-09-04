@@ -23,6 +23,7 @@ export type ToggleResult = { enabled: boolean; whatsapp: "sent" | "failed" | "sk
 export async function toggleAccountEnabled(
   findProfile: () => Promise<ProfileWithUser | null>,
   enabled: boolean,
+  orgName: string,
 ): Promise<ToggleResult | null> {
   const profile = await findProfile();
   if (!profile) return null;
@@ -32,7 +33,7 @@ export async function toggleAccountEnabled(
   let whatsapp: ToggleResult["whatsapp"] = "skipped";
   if (enabled && !profile.user.enabled && profile.phone) {
     try {
-      await sendWelcomeWhatsApp(user.name, user.email, profile.phone);
+      await sendWelcomeWhatsApp(user.name, user.email, profile.phone, orgName);
       whatsapp = "sent";
     } catch (err) {
       console.error("No se pudo enviar bienvenida por WhatsApp", err);

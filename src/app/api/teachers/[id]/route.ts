@@ -1,10 +1,10 @@
 import { prisma, PUBLIC_USER_SELECT } from "@/lib/prisma";
-import { requireRole } from "@/lib/require-role";
+import { requireOrg, assertSameOrg } from "@/lib/require-org";
 import { toggleAccountEnabled } from "@/lib/pending-account";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { id } = await params;
@@ -25,12 +25,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     },
   });
 
-  if (!teacher) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  if (!teacher || !assertSameOrg(teacher.organizationId, organizationId)) {
+    return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  }
 
-  const { classrooms, ...rest } = teacher;
   return NextResponse.json({
-    ...rest,
-    classrooms: classrooms.map((c) => ({
+    id: teacher.id,
+    dni: teacher.dni,
+    phone: teacher.phone,
+    address: teacher.address,
+    hourlyRate: teacher.hourlyRate,
+    user: teacher.user,
+    payrollItems: teacher.payrollItems,
+    classrooms: teacher.classrooms.map((c) => ({
       id: c.id,
       name: c.name,
       level: c.level,
@@ -40,7 +47,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { id } = await params;
@@ -49,9 +56,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   }
 
+  const existing = await prisma.teacherProfile.findUnique({
+    where: { id },
+    select: { organizationId: true, organization: { select: { name: true } } },
+  });
+  if (!assertSameOrg(existing?.organizationId, organizationId)) {
+    return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  }
+
   const result = await toggleAccountEnabled(
     () => prisma.teacherProfile.findUnique({ where: { id }, include: { user: true } }),
     enabled,
+    existing.organization?.name ?? "tu instituto",
   );
   if (!result) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 

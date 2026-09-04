@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsAppText } from "@/lib/openwa";
 import { normalizePhone } from "@/lib/phone";
+import { getDefaultOrganizationId } from "@/lib/default-organization";
 
 const REMIND_EVERY_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -15,15 +16,23 @@ export async function GET(req: Request) {
 
   // primero pasa a VENCIDO cualquier cuota PENDIENTE cuyo vencimiento ya pasó, para que el
   // directivo no tenga que acordarse de cambiarlo a mano ni el resto del sistema (paneles,
-  // reportes, este mismo cron) dependa de un estado desactualizado.
+  // reportes, este mismo cron) dependa de un estado desactualizado. Esto es correcto para
+  // TODAS las organizaciones por igual — el vencimiento por fecha no depende del tenant.
   await prisma.payment.updateMany({
     where: { status: "PENDIENTE", dueDate: { lt: new Date() } },
     data: { status: "VENCIDO" },
   });
 
+  // el envío por WhatsApp, en cambio, solo puede hacerse para la organización dueña de la
+  // única sesión de OpenWA que existe hoy (ver src/lib/openwa.ts) — si otra organización
+  // tuviera cuotas vencidas, no hay forma de avisarle por este canal todavía. Temporal,
+  // atado a que WhatsApp multi-tenant no está en esta etapa (ver default-organization.ts).
+  const organizationId = await getDefaultOrganizationId();
+  const organization = await prisma.organization.findUniqueOrThrow({ where: { id: organizationId }, select: { name: true } });
   const cutoff = new Date(Date.now() - REMIND_EVERY_MS);
   const overdue = await prisma.payment.findMany({
     where: {
+      organizationId,
       status: "VENCIDO",
       OR: [{ remindedAt: null }, { remindedAt: { lt: cutoff } }],
     },
@@ -32,7 +41,7 @@ export async function GET(req: Request) {
 
   let sent = 0;
   for (const payment of overdue) {
-    const message = `Hola ${payment.student.user.name}! Te recordamos que la cuota de ${payment.period} ($${payment.amount}) está vencida en Redbus School of English. Cualquier consulta, respondé este mensaje.`;
+    const message = `Hola ${payment.student.user.name}! Te recordamos que la cuota de ${payment.period} ($${payment.amount}) está vencida en ${organization.name}. Cualquier consulta, respondé este mensaje.`;
 
     // el mismo aviso va al alumno y a sus contactos de emergencia (padre/madre/tutor) —
     // reusa el teléfono que ya cargó el directivo, sin necesidad de un portal aparte.

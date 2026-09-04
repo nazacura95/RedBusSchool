@@ -4,15 +4,15 @@ export type AtRiskStudent = { studentId: string; name: string; reasons: string[]
 
 // cruza ausencias consecutivas + cuotas vencidas para detectar alumnos en riesgo de abandono,
 // sin necesidad de scoring/ML — alcanza para el tamaño de un instituto de barrio.
-export async function findAtRiskStudents(): Promise<AtRiskStudent[]> {
+export async function findAtRiskStudents(organizationId: string): Promise<AtRiskStudent[]> {
   const [overduePayments, activeEnrollments] = await Promise.all([
     prisma.payment.findMany({
-      where: { status: "VENCIDO" },
+      where: { status: "VENCIDO", organizationId },
       distinct: ["studentId"],
       select: { studentId: true, student: { select: { user: { select: { name: true } } } } },
     }),
     prisma.enrollment.findMany({
-      where: { status: "ACTIVA" },
+      where: { status: "ACTIVA", student: { organizationId } },
       select: {
         studentId: true,
         student: { select: { user: { select: { name: true } } } },

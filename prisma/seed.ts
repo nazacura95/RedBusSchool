@@ -5,15 +5,6 @@ const prisma = new PrismaClient();
 
 const LEVELS = ["Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4", "Nivel 5", "Nivel 6", "Nivel 7", "Nivel 8"];
 
-const TEACHER_NAMES = [
-  "Marina Sosa",
-  "Lucas Fernández",
-  "Camila Torres",
-  "Ezequiel Romero",
-  "Julieta Acosta",
-  "Nicolás Herrera",
-];
-
 const FIRST_NAMES = [
   "Sofía", "Mateo", "Valentina", "Santiago", "Isabella", "Benjamín", "Emma", "Joaquín",
   "Martina", "Thiago", "Catalina", "Bautista", "Renata", "Lorenzo", "Delfina", "Agustín",
@@ -38,84 +29,114 @@ function fullName(i: number, offset = 0) {
   return `${pick(FIRST_NAMES, i + offset)} ${pick(LAST_NAMES, i * 3 + offset)}`;
 }
 
-async function upsertUser(email: string, name: string, password: string, roles: ("ALUMNO" | "DOCENTE" | "DIRECTIVO")[]) {
+async function upsertUser(
+  email: string,
+  name: string,
+  password: string,
+  roles: ("ALUMNO" | "DOCENTE" | "DIRECTIVO")[],
+  organizationId: string,
+) {
   const passwordHash = await bcrypt.hash(password, 10);
   return prisma.user.upsert({
     where: { email },
-    update: { roles, name },
-    create: { email, passwordHash, name, roles },
+    update: { roles, name, organizationId },
+    create: { email, passwordHash, name, roles, organizationId },
   });
 }
 
-async function main() {
+type SeedOrgConfig = {
+  slug: string;
+  name: string;
+  emailDomain: string;
+  ownerName: string;
+  ownerPassword: string;
+  teacherNames: string[];
+  studentCount: number;
+  levels?: string[];
+};
+
+async function seedOrganization(config: SeedOrgConfig) {
+  const { slug, name, emailDomain, ownerName, ownerPassword, teacherNames, studentCount, levels = LEVELS } = config;
+
+  const org = await prisma.organization.upsert({
+    where: { slug },
+    update: { name },
+    create: { slug, name },
+  });
+
   // 1. Usuario principal: los 3 roles a la vez, para poder ver todas las interfaces.
-  const ownerEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@redbusschool.com";
-  const ownerPassword = process.env.SEED_ADMIN_PASSWORD ?? "cambiar123";
-  const owner = await upsertUser(ownerEmail, "Nazareno Cura", ownerPassword, ["DIRECTIVO", "DOCENTE", "ALUMNO"]);
+  const ownerEmail = `admin@${emailDomain}`;
+  const owner = await upsertUser(ownerEmail, ownerName, ownerPassword, ["DIRECTIVO", "DOCENTE", "ALUMNO"], org.id);
 
   const ownerTeacherProfile = await prisma.teacherProfile.upsert({
     where: { userId: owner.id },
-    update: {},
-    create: { userId: owner.id, hourlyRate: 8000 },
+    update: { organizationId: org.id },
+    create: { userId: owner.id, hourlyRate: 8000, organizationId: org.id },
   });
   const ownerStudentProfile = await prisma.studentProfile.upsert({
     where: { userId: owner.id },
-    update: {},
-    create: { userId: owner.id },
+    update: { organizationId: org.id },
+    create: { userId: owner.id, organizationId: org.id },
   });
 
   // 2. Docentes de prueba (además del owner, que también da clases).
   const teacherProfiles = [ownerTeacherProfile];
-  for (let i = 0; i < TEACHER_NAMES.length; i++) {
-    const email = `docente${i + 1}@redbusschool.com`;
-    const user = await upsertUser(email, TEACHER_NAMES[i], "docente123", ["DOCENTE"]);
+  for (let i = 0; i < teacherNames.length; i++) {
+    const email = `docente${i + 1}@${emailDomain}`;
+    const user = await upsertUser(email, teacherNames[i], "docente123", ["DOCENTE"], org.id);
     const profile = await prisma.teacherProfile.upsert({
       where: { userId: user.id },
-      update: {},
-      create: { userId: user.id, hourlyRate: 6000 + i * 200 },
+      update: { organizationId: org.id },
+      create: { userId: user.id, hourlyRate: 6000 + i * 200, organizationId: org.id },
     });
     teacherProfiles.push(profile);
   }
 
-  // 3. Aulas: una por nivel y docente rotando, más una del owner.
+  // 3. Aulas: una por nivel y docente rotando, más una del owner. Con orgs chicas (pocos
+  // docentes/niveles) se recorta la cantidad de aulas para no pedir más niveles de los que hay.
+  const levelCount = Math.min(levels.length, Math.max(teacherProfiles.length, 3));
   const classrooms = [];
-  for (let i = 0; i < LEVELS.length; i++) {
+  for (let i = 0; i < levelCount; i++) {
     const teacher = pick(teacherProfiles, i);
-    const name = `${LEVELS[i]} - Comisión A`;
+    // Classroom.name todavía es único GLOBAL (la migración B, que lo pasa a único por
+    // organización, se aplica recién después del backfill — ver plan de migración). Hasta
+    // entonces, el seed tiene que garantizar nombres únicos a mano entre organizaciones.
+    const classroomName = `${levels[i]} - Comisión A (${slug})`;
     const classroom = await prisma.classroom.upsert({
-      where: { name },
-      update: {},
-      create: { name, level: LEVELS[i], teacherId: teacher.id },
+      where: { name: classroomName },
+      update: { organizationId: org.id },
+      create: { name: classroomName, level: levels[i], teacherId: teacher.id, organizationId: org.id },
     });
     classrooms.push(classroom);
   }
-  // segunda comisión para los primeros 3 niveles (más alumnos, institutos reales tienen varias)
-  for (let i = 0; i < 3; i++) {
+  // segunda comisión para los primeros niveles, solo si la organización es grande (Red Bus)
+  const extraComisiones = studentCount >= 50 ? 3 : 0;
+  for (let i = 0; i < extraComisiones; i++) {
     const teacher = pick(teacherProfiles, i + 3);
-    const name = `${LEVELS[i]} - Comisión B`;
+    const classroomName = `${levels[i]} - Comisión B (${slug})`;
     const classroom = await prisma.classroom.upsert({
-      where: { name },
-      update: {},
-      create: { name, level: LEVELS[i], teacherId: teacher.id },
+      where: { name: classroomName },
+      update: { organizationId: org.id },
+      create: { name: classroomName, level: levels[i], teacherId: teacher.id, organizationId: org.id },
     });
     classrooms.push(classroom);
   }
 
-  // 4. ~100 alumnos de prueba, distribuidos en las aulas, con pagos variados.
-  const STUDENT_COUNT = 100;
+  // 4. Alumnos de prueba, distribuidos en las aulas, con pagos variados.
   const enrollmentStatuses: EnrollmentStatus[] = ["ACTIVA", "ACTIVA", "ACTIVA", "ACTIVA", "PAUSADA", "FINALIZADA"];
   const paymentStatuses: PaymentStatus[] = ["PAGADO", "PAGADO", "PAGADO", "PENDIENTE", "VENCIDO"];
 
-  for (let i = 0; i < STUDENT_COUNT; i++) {
-    const email = `alumno${i + 1}@redbusschool.com`;
-    const name = fullName(i);
-    const user = await upsertUser(email, name, "alumno123", ["ALUMNO"]);
+  for (let i = 0; i < studentCount; i++) {
+    const email = `alumno${i + 1}@${emailDomain}`;
+    const studentName = fullName(i);
+    const user = await upsertUser(email, studentName, "alumno123", ["ALUMNO"], org.id);
     const birthYear = 2026 - (6 + (i % 30)); // entre 6 y 35 años
     const studentData = {
-      dni: `${30000000 + i}`,
+      dni: `${slug}-${30000000 + i}`,
       phone: `11${4000000 + i * 37}`,
       address: `Calle ${100 + i} ${pick(["", "1° A", "PB", "3° C"], i)}`.trim(),
       birthDate: new Date(birthYear, i % 12, 1 + (i % 28)),
+      organizationId: org.id,
     };
     const profile = await prisma.studentProfile.upsert({
       where: { userId: user.id },
@@ -160,6 +181,7 @@ async function main() {
             status,
             paidAt: status === "PAGADO" ? period : null,
             method: status === "PAGADO" ? pick(PAYMENT_METHODS, i) : null,
+            organizationId: org.id,
           },
         });
       }
@@ -167,20 +189,117 @@ async function main() {
   }
 
   // 5. También inscribimos al owner como alumno en un aula, para que su vista de alumno no esté vacía.
+  const ownerClassroom = classrooms[Math.min(4, classrooms.length - 1)];
   await prisma.enrollment.upsert({
-    where: { studentId_classroomId: { studentId: ownerStudentProfile.id, classroomId: classrooms[4].id } },
+    where: { studentId_classroomId: { studentId: ownerStudentProfile.id, classroomId: ownerClassroom.id } },
     update: {},
-    create: { studentId: ownerStudentProfile.id, classroomId: classrooms[4].id, status: "ACTIVA" },
+    create: { studentId: ownerStudentProfile.id, classroomId: ownerClassroom.id, status: "ACTIVA" },
   });
   const ownerHasPayments = await prisma.payment.count({ where: { studentId: ownerStudentProfile.id } });
   if (ownerHasPayments === 0) {
     await prisma.payment.create({
-      data: { studentId: ownerStudentProfile.id, amount: 15000, period: "2026-07", status: "PENDIENTE" },
+      data: {
+        studentId: ownerStudentProfile.id,
+        amount: 15000,
+        period: "2026-07",
+        status: "PENDIENTE",
+        organizationId: org.id,
+      },
     });
   }
 
-  console.log(`Listo. Usuario principal: ${ownerEmail} / ${ownerPassword} (DIRECTIVO + DOCENTE + ALUMNO)`);
-  console.log(`${teacherProfiles.length} docentes, ${classrooms.length} aulas, ${STUDENT_COUNT} alumnos de prueba.`);
+  console.log(`[${slug}] Listo. Usuario principal: ${ownerEmail} / ${ownerPassword} (DIRECTIVO + DOCENTE + ALUMNO)`);
+  console.log(`[${slug}] ${teacherProfiles.length} docentes, ${classrooms.length} aulas, ${studentCount} alumnos.`);
+}
+
+// Institutos de prueba: variados a propósito (idiomas, colegio, música, tech, fitness) para
+// demostrar que Bedel sirve a distintos rubros, no solo institutos de inglés. Todos con datos
+// ficticios — ninguno es un cliente real. Sirven para probar aislamiento con carga de varios
+// tenants a la vez (ver plan de migración a Bedel).
+const DEMO_ORGS: SeedOrgConfig[] = [
+  {
+    slug: "demo-academy",
+    name: "Demo Academy",
+    emailDomain: "demoacademy.com",
+    ownerName: "Carla Mendez",
+    ownerPassword: "cambiar123",
+    teacherNames: ["Pablo Ibáñez", "Rocío Paz"],
+    studentCount: 10,
+  },
+  {
+    slug: "continental",
+    name: "Academia Continental de Idiomas",
+    emailDomain: "continentalidiomas.com",
+    ownerName: "Mariana Gutiérrez",
+    ownerPassword: "cambiar123",
+    teacherNames: ["Diego Salvatierra", "Florencia Nuñez", "Martín Ocampo"],
+    studentCount: 34,
+    levels: ["Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4", "Nivel 5"],
+  },
+  {
+    slug: "sanmartin",
+    name: "Instituto San Martín",
+    emailDomain: "institutosanmartin.edu.ar",
+    ownerName: "Roberto Aguirre",
+    ownerPassword: "cambiar123",
+    teacherNames: ["Silvina Correa", "Gustavo Peralta", "Laura Vidal", "Emiliano Bravo"],
+    studentCount: 48,
+    levels: ["1° Año", "2° Año", "3° Año", "4° Año", "5° Año"],
+  },
+  {
+    slug: "conservatorionova",
+    name: "Conservatorio Nova",
+    emailDomain: "conservatorionova.com",
+    ownerName: "Valeria Sarmiento",
+    ownerPassword: "cambiar123",
+    teacherNames: ["Hernán Duarte", "Cecilia Lamas"],
+    studentCount: 16,
+    levels: ["Piano Inicial", "Piano Intermedio", "Guitarra Inicial", "Canto"],
+  },
+  {
+    slug: "codelab",
+    name: "CodeLab Bootcamp",
+    emailDomain: "codelabbootcamp.com",
+    ownerName: "Tomás Villalba",
+    ownerPassword: "cambiar123",
+    teacherNames: ["Agustina Ferreyra", "Braian Coronel"],
+    studentCount: 22,
+    levels: ["Fundamentos", "Frontend", "Backend", "Proyecto Final"],
+  },
+  {
+    slug: "pilatesflow",
+    name: "Estudio Pilates Flow",
+    emailDomain: "pilatesflow.com",
+    ownerName: "Ayelén Roldán",
+    ownerPassword: "cambiar123",
+    teacherNames: ["Nadia Quiroga"],
+    studentCount: 12,
+    levels: ["Principiantes", "Intermedio", "Avanzado"],
+  },
+];
+
+async function main() {
+  // Red Bus: la organización real, con el volumen de datos de siempre.
+  await seedOrganization({
+    slug: "redbus",
+    name: "Redbus School of English",
+    emailDomain: "redbusschool.com",
+    ownerName: "Nazareno Cura",
+    ownerPassword: process.env.SEED_ADMIN_PASSWORD ?? "cambiar123",
+    teacherNames: [
+      "Marina Sosa",
+      "Lucas Fernández",
+      "Camila Torres",
+      "Ezequiel Romero",
+      "Julieta Acosta",
+      "Nicolás Herrera",
+    ],
+    studentCount: 100,
+  });
+
+  for (const org of DEMO_ORGS) {
+    await seedOrganization(org);
+  }
 }
 
 main().finally(() => prisma.$disconnect());

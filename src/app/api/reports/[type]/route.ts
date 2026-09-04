@@ -1,16 +1,17 @@
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/require-role";
+import { requireOrg } from "@/lib/require-org";
 import { toCsv, csvResponse } from "@/lib/csv";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request, { params }: { params: Promise<{ type: string }> }) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { type } = await params;
 
   if (type === "alumnos") {
     const students = await prisma.studentProfile.findMany({
+      where: { organizationId },
       include: { user: true, enrollments: { include: { classroom: true } } },
       orderBy: { user: { name: "asc" } },
     });
@@ -37,6 +38,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
 
   if (type === "pagos") {
     const payments = await prisma.payment.findMany({
+      where: { organizationId },
       include: { student: { include: { user: true } } },
       orderBy: { createdAt: "desc" },
     });
@@ -63,6 +65,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
 
   if (type === "docentes") {
     const teachers = await prisma.teacherProfile.findMany({
+      where: { organizationId },
       include: { user: true, classrooms: true },
       orderBy: { user: { name: "asc" } },
     });
@@ -87,6 +90,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
 
   if (type === "aulas") {
     const classrooms = await prisma.classroom.findMany({
+      where: { organizationId },
       include: { teacher: { include: { user: true } }, enrollments: true },
       orderBy: { name: "asc" },
     });
@@ -108,7 +112,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ type: st
   }
 
   if (type === "gastos") {
-    const expenses = await prisma.expense.findMany({ orderBy: { date: "desc" } });
+    const expenses = await prisma.expense.findMany({ where: { organizationId }, orderBy: { date: "desc" } });
     const csv = toCsv(
       expenses.map((e) => ({
         fecha: e.date.toISOString().slice(0, 10),

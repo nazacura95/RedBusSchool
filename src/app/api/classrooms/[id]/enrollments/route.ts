@@ -1,14 +1,22 @@
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/require-role";
+import { requireOrg, assertSameOrg } from "@/lib/require-org";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { id: classroomId } = await params;
   const { studentId, status } = await req.json();
   if (!studentId) return NextResponse.json({ error: "Falta el alumno" }, { status: 400 });
+
+  const [classroom, student] = await Promise.all([
+    prisma.classroom.findUnique({ where: { id: classroomId }, select: { organizationId: true } }),
+    prisma.studentProfile.findUnique({ where: { id: studentId }, select: { organizationId: true } }),
+  ]);
+  if (!assertSameOrg(classroom?.organizationId, organizationId) || !assertSameOrg(student?.organizationId, organizationId)) {
+    return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  }
 
   try {
     const enrollment = await prisma.enrollment.create({
@@ -21,13 +29,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { id: classroomId } = await params;
   const { enrollmentId, status } = await req.json();
   if (!enrollmentId || !status) {
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
+  }
+
+  const classroom = await prisma.classroom.findUnique({ where: { id: classroomId }, select: { organizationId: true } });
+  if (!assertSameOrg(classroom?.organizationId, organizationId)) {
+    return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
   const enrollment = await prisma.enrollment.update({

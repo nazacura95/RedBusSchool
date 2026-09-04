@@ -25,13 +25,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!allowed) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
+        // organizationId nace nullable (migración A, ver prisma/scripts/backfill-organization.ts):
+        // si todavía no está backfilleado no dejamos loguear, porque no habría cómo aislar sus datos.
+        // única excepción: las cuentas de plataforma (isPlatformAdmin) no pertenecen a ningún
+        // instituto a propósito, así que no se les exige organizationId.
         if (!user || !user.enabled) return null;
+        if (!user.isPlatformAdmin && !user.organizationId) return null;
 
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
         await clearRateLimit(`login:${email.trim().toLowerCase()}`);
-        return { id: user.id, email: user.email, name: user.name, roles: user.roles };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          roles: user.roles,
+          organizationId: user.organizationId,
+          isPlatformAdmin: user.isPlatformAdmin,
+        };
       },
     }),
   ],
@@ -40,21 +52,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.roles = user.roles;
+        token.organizationId = user.organizationId;
+        token.isPlatformAdmin = user.isPlatformAdmin;
         token.enabledCheckedAt = Date.now();
         return token;
       }
 
-      // re-chequea enabled contra la base cada 5 min como máximo: si deshabilitaron la cuenta
-      // (despido, conflicto), la sesión JWT (hasta 30 días) queda sin roles y proxy.ts la trata
-      // como no autenticada en vez de confiar ciegamente en lo que dice el token viejo.
+      // re-chequea enabled/roles/organizationId contra la base cada 5 min como máximo: si
+      // deshabilitaron la cuenta (despido, conflicto) o le cambiaron la organización, la sesión
+      // JWT (hasta 30 días) queda sin roles y proxy.ts la trata como no autenticada en vez de
+      // confiar ciegamente en lo que dice el token viejo.
       const tokenId = token.id as string | undefined;
       const checkedAt = (token.enabledCheckedAt as number | undefined) ?? 0;
       if (tokenId && Date.now() - checkedAt > ENABLED_RECHECK_MS) {
         const dbUser = await prisma.user.findUnique({
           where: { id: tokenId },
-          select: { enabled: true, roles: true },
+          select: { enabled: true, roles: true, organizationId: true, isPlatformAdmin: true },
         });
         token.roles = dbUser?.enabled ? dbUser.roles : [];
+        token.organizationId = dbUser?.organizationId ?? token.organizationId;
+        token.isPlatformAdmin = dbUser?.isPlatformAdmin ?? false;
         token.enabledCheckedAt = Date.now();
       }
       return token;
@@ -63,6 +80,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.roles = token.roles as Role[];
+        session.user.organizationId = token.organizationId as string;
+        session.user.isPlatformAdmin = token.isPlatformAdmin as boolean;
       }
       return session;
     },

@@ -43,7 +43,7 @@ export default async function DocenteClassroomPage({
   const activeStudents = activeEnrollments.length;
 
   return (
-    <AppShell roles={session!.user.roles} name={session!.user.name} title={classroom.name}>
+    <AppShell organizationId={session!.user.organizationId} roles={session!.user.roles} name={session!.user.name} title={classroom.name}>
       <div>
         <h2 className="text-2xl font-bold text-neutral-900">{classroom.name}</h2>
         <p className="text-sm text-neutral-500">{classroom.level}</p>

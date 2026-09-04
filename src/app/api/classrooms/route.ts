@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/require-role";
+import { requireOrg } from "@/lib/require-org";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const classrooms = await prisma.classroom.findMany({
+    where: { organizationId },
     select: {
       id: true,
       name: true,
@@ -24,7 +25,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { response } = await requireRole("DIRECTIVO");
+  const { organizationId, response } = await requireOrg("DIRECTIVO");
   if (response) return response;
 
   const { name, level, teacherId, dayOfWeek, startTime, endTime } = await req.json();
@@ -32,11 +33,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
   }
 
+  // el docente tiene que ser de la misma organización, si no el aula queda "huérfana" con un
+  // docente que la dirección no puede ver ni administrar.
+  const teacher = await prisma.teacherProfile.findUnique({ where: { id: teacherId }, select: { organizationId: true } });
+  if (!teacher || teacher.organizationId !== organizationId) {
+    return NextResponse.json({ error: "Docente inválido" }, { status: 400 });
+  }
+
   const classroom = await prisma.classroom.create({
     data: {
       name,
       level,
       teacherId,
+      organizationId,
       dayOfWeek: Array.isArray(dayOfWeek) ? dayOfWeek : [],
       startTime: startTime || null,
       endTime: endTime || null,

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 async function assertOwner(classroomId: string, userId: string) {
   const classroom = await prisma.classroom.findUnique({
     where: { id: classroomId },
-    include: { teacher: true },
+    include: { teacher: true, organization: { select: { name: true } } },
   });
   return classroom && classroom.teacher.userId === userId ? classroom : null;
 }
@@ -40,7 +40,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (response) return response;
 
   const { id } = await params;
-  if (!(await assertOwner(id, session.user.id))) {
+  const classroom = await assertOwner(id, session.user.id);
+  if (!classroom) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
@@ -83,7 +84,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       for (const contact of e.student.contacts) {
         sendWhatsAppText(
           normalizePhone(contact.phone),
-          `Hola! Te avisamos que ${e.student.user.name} estuvo ausente hoy en Redbus School of English.`,
+          `Hola! Te avisamos que ${e.student.user.name} estuvo ausente hoy en ${classroom.organization?.name ?? "el instituto"}.`,
         ).catch((err) => console.error("No se pudo avisar ausencia por WhatsApp", err));
       }
     }

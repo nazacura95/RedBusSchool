@@ -34,15 +34,31 @@ function navLinkClass(active: boolean) {
   }`;
 }
 
-export function Sidebar({ roles, onNavigate }: { roles: Role[]; onNavigate?: () => void }) {
+export function Sidebar({
+  roles,
+  orgName = "Bedel",
+  logoUrl,
+  onNavigate,
+}: {
+  roles: Role[];
+  orgName?: string;
+  logoUrl?: string | null;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const items = roleOrder.filter((r) => roles.includes(r)).map((r) => roleNav[r]);
 
   return (
     <div className="flex h-full w-[232px] flex-col gap-1 bg-accent-600 p-3.5">
       <div className="flex items-center gap-2 px-2.5 pb-5 pt-1.5">
-        <Image src="/brand/logo-256.png" alt="Redbus School of English" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full" />
-        <span className="truncate font-serif text-base font-bold text-white">Redbus School</span>
+        {logoUrl ? (
+          <Image src={logoUrl} alt={orgName} width={36} height={36} className="h-9 w-9 shrink-0 rounded-full object-cover" />
+        ) : (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500 font-serif text-sm font-bold text-white">
+            {orgName.trim().charAt(0).toUpperCase() || "B"}
+          </span>
+        )}
+        <span className="truncate font-serif text-base font-bold text-white">{orgName}</span>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
         {items.map((item) => {

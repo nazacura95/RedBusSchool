@@ -33,7 +33,7 @@ export default async function AlumnoDashboard() {
     : [];
 
   return (
-    <AppShell roles={session!.user.roles} name={session!.user.name} title="Panel del alumno">
+    <AppShell organizationId={session!.user.organizationId} roles={session!.user.roles} name={session!.user.name} title="Panel del alumno">
       <div>
         <h2 className="text-2xl font-bold text-neutral-900">Hola, {session!.user.name}</h2>
         <p className="text-sm text-neutral-500">Este es el resumen de tu actividad en el instituto.</p>
